@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "AstraDB.Token.Rotation.Consumer.Function": {
+      "commandName": "Project",
+      "commandLineArgs": "--port 7175",
+      "launchBrowser": false
+    }
+  }
+}
