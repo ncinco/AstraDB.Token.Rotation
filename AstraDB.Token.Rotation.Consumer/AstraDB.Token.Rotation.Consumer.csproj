@@ -11,4 +11,8 @@
     <PackageReference Include="Confluent.Kafka" Version="2.1.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\AstraDB.Token.Rotation.Models\AstraDB.Token.Rotation.Models.csproj" />
+  </ItemGroup>
+
 </Project>

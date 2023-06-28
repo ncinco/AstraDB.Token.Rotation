@@ -20,6 +20,7 @@ namespace AstraDB.Token.Rotation.Consumer.Function
                           Password = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczovL2F1dGguY29uZHVrdG9yLmlvIiwic291cmNlQXBwbGljYXRpb24iOiJhZG1pbiIsInVzZXJNYWlsIjpudWxsLCJwYXlsb2FkIjp7InZhbGlkRm9yVXNlcm5hbWUiOiJuUjhRNkxLcENXM0NOWjk2bjBQVTkiLCJvcmdhbml6YXRpb25JZCI6NzQzMDEsInVzZXJJZCI6ODY0MzEsImZvckV4cGlyYXRpb25DaGVjayI6IjBhNTFlYWIxLWQ5NjctNGQwNS05MzQ5LTRkYzljNjNkNTgwNiJ9fQ.FENh-OXizfIiLGmjGOKuB1apTQLeyT-JteT2g2RcISU",
                           Protocol = BrokerProtocol.SaslSsl,
                           AuthenticationMode = BrokerAuthenticationMode.Plain,
+                          SslCaLocation = "cacert.pem",
                           ConsumerGroup = "$Default")] KafkaEventData<string>[] events,
             ILogger log)
         {

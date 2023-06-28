@@ -1,4 +1,4 @@
-﻿namespace AstraDB.Token.Rotation.Producer
+﻿namespace AstraDB.Token.Rotation.Models
 {
     public class AstraRevokeTokenResponse
     {
