@@ -2,6 +2,7 @@
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
 using Confluent.Kafka;
+using Newtonsoft.Json;
 using RestSharp;
 
 namespace AstraDB.Token.Rotation.Consumer
@@ -43,30 +44,31 @@ namespace AstraDB.Token.Rotation.Consumer
                 restClient.AddDefaultHeader("Content-Type", "application/json");
                 restClient.AddDefaultHeader("Authorization", "Bearer AstraCS:JidKALteKigmDImudJcimeZP:5593ab3ad44fd6cdc20f4be849132fe4812a76a51433c1daa4d4f55958903635");
 
-
-
                 while (true)
                 {
                     try
                     {
                         var msg = consumer.Consume(cts.Token);
-                        var message = Newtonsoft.Json.JsonConvert.DeserializeObject<EventStreamTokenRotationMessage>(msg.Message.Value);
+                        var message = JsonConvert.DeserializeObject<EventStreamTokenRotationMessage>(msg.Message.Value);
                         Console.WriteLine($"Received: '{msg.Message.Value}'");
 
                         Console.WriteLine("Attempting to create new AstraDB Token...");
                         var createTokenRequest = new RestRequest("organizations/roles");
                         createTokenRequest.AddJsonBody(message.Roles);
                         var astraNewTokenResponse = restClient.Post<AstraNewTokenResponse>(createTokenRequest);
-                        Console.WriteLine($"Succeeded creating new AstraDB Token. {astraNewTokenResponse.ClientId}");
+                        Console.WriteLine($"Succeeded creating new AstraDB Token. {JsonConvert.SerializeObject(astraNewTokenResponse.ClientId)}");
 
-                        //var accessToken = keyVaultSecretClient.GetSecret($"{message.SeedClientId}-AccessToken").Value;
-                        //var clientSecret = keyVaultSecretClient.GetSecret($"{message.SeedClientId}-ClientSecret").Value;
+                        UpdateSecret($"{message.SeedClientId}-AccessToken", "rotating", astraNewTokenResponse.ClientId, astraNewTokenResponse.GeneratedOn, astraNewTokenResponse.Token);
+                        UpdateSecret($"{message.SeedClientId}-ClientSecret", "rotating", astraNewTokenResponse.ClientId, astraNewTokenResponse.GeneratedOn, astraNewTokenResponse.Secret);
 
                         Console.WriteLine("$Attempting to revoke new AstraDB Token '{message.ClientId}'");
                         var revokeTokenRequest = new RestRequest("organizations/roles");
                         revokeTokenRequest.AddJsonBody(message.Roles);
-                        //var astraRevokeTokenResponse = restClient.Post<AstraRevokeTokenResponse>(revokeTokenRequest);
+                        var astraRevokeTokenResponse = restClient.Post<AstraRevokeTokenResponse>(revokeTokenRequest);
                         Console.WriteLine($"Succeeded revoking AstraDB Token. '{message.ClientId}'");
+
+                        UpdateSecret($"{message.SeedClientId}-AccessToken", "active", astraNewTokenResponse.ClientId, astraNewTokenResponse.GeneratedOn);
+                        UpdateSecret($"{message.SeedClientId}-ClientSecret", "active", astraNewTokenResponse.ClientId, astraNewTokenResponse.GeneratedOn);
                     }
                     catch (ConsumeException e)
                     {
@@ -98,19 +100,31 @@ namespace AstraDB.Token.Rotation.Consumer
 
             if (!string.IsNullOrWhiteSpace(secretValue))
             {
-                Console.WriteLine($"Can't find secret named {secretName}. Potential bug.");
+                Console.WriteLine($"Creating new secret version: {theSecret.Value.Name} {tags}");
+                // update the secret, this will create new version WITHOUT the tags
+                keyVaultSecretClient.SetSecret(secretName, secretValue);
+                // get the latest version
+                theSecret = keyVaultSecretClient.GetSecret(secretName);
             }
-  //          print(f'Creating new secret version: {theSecret.name} {theSecret.properties.tags}')
-  //  # update the secret, this will create new version WITHOUT the tags
-  //  secretClient.set_secret(secretName, secretValue)
-  //  # get the latest version
-  //  theSecret = secretClient.get_secret(secretName)
 
-  //print(f'Updating secret tags: {theSecret.name} {tags}')
-  //tags["clientId"] = clientId
-  //tags["status"] = secretStatus
-  //tags["generatedOn"] = generatedOn
-  //secretClient.update_secret_properties(secretName, content_type = "text/plain", tags = tags, not_before = datetime.now(pytz.timezone("Etc/GMT+12")), expires_on = datetime.now(pytz.timezone("Etc/GMT+12")) + timedelta(hours = secretExpiryHours))
+            Console.WriteLine($"Updating secret tags: {theSecret.Value.Name} {tags}");
+            tags["clientId"] = clientId;
+            tags["status"] = secretStatus;
+            tags["generatedOn"] = generatedOn;
+
+            var secretProperties = new SecretProperties(secretName)
+            {
+                ContentType = "text/plain",
+                NotBefore = DateTime.Now,
+                ExpiresOn = DateTime.Now.AddHours(24)
+            };
+
+            foreach (var item in tags)
+            {
+                secretProperties.Tags.Add(item);
+            }
+
+            keyVaultSecretClient.UpdateSecretProperties(secretProperties);
         }
     }
 }

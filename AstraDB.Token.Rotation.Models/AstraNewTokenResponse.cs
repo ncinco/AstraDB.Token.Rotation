@@ -11,5 +11,7 @@
         public List<string> Roles { get; set; }
 
         public string Token { get; set; }
+
+        public string GeneratedOn { get; set; }
     }
 }
