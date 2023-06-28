@@ -39,8 +39,11 @@ namespace AstraDB.Token.Rotation.Consumer
 
                 Console.WriteLine("Consuming messages from topic: " + topic + ", broker(s): " + brokerList);
 
-                var credential = new ClientSecretCredential("a5e8ce79-b0ec-41a2-a51c-aee927f1d808", "8b281262-415c-4a6c-91b9-246de71c17a9", "3tt8Q~xnvgt~kDmPdGlMoLxzmo8oC7Nf9OSlAcWy");
-                var keyVaultSecretClient = new SecretClient(new Uri("https://kv-astradb-astra.vault.azure.net/"), credential);
+                var restClient = new RestClient("https://api.astra.datastax.com");
+                restClient.AddDefaultHeader("Content-Type", "application/json");
+                restClient.AddDefaultHeader("Authorization", "Bearer AstraCS:JidKALteKigmDImudJcimeZP:5593ab3ad44fd6cdc20f4be849132fe4812a76a51433c1daa4d4f55958903635");
+
+
 
                 while (true)
                 {
@@ -53,11 +56,11 @@ namespace AstraDB.Token.Rotation.Consumer
                         Console.WriteLine("Attempting to create new AstraDB Token...");
                         var createTokenRequest = new RestRequest("organizations/roles");
                         createTokenRequest.AddJsonBody(message.Roles);
-                        //var astraNewTokenResponse = restClient.Post<AstraNewTokenResponse>(createTokenRequest);
-                        Console.WriteLine("Succeeded creating new AstraDB Token.");
+                        var astraNewTokenResponse = restClient.Post<AstraNewTokenResponse>(createTokenRequest);
+                        Console.WriteLine($"Succeeded creating new AstraDB Token. {astraNewTokenResponse.ClientId}");
 
-                        var accessToken = keyVaultSecretClient.GetSecret($"{message.SeedClientId}-AccessToken").Value;
-                        var clientSecret = keyVaultSecretClient.GetSecret($"{message.SeedClientId}-ClientSecret").Value;
+                        //var accessToken = keyVaultSecretClient.GetSecret($"{message.SeedClientId}-AccessToken").Value;
+                        //var clientSecret = keyVaultSecretClient.GetSecret($"{message.SeedClientId}-ClientSecret").Value;
 
                         Console.WriteLine("$Attempting to revoke new AstraDB Token '{message.ClientId}'");
                         var revokeTokenRequest = new RestRequest("organizations/roles");
@@ -75,6 +78,39 @@ namespace AstraDB.Token.Rotation.Consumer
                     }
                 }
             }
+        }
+
+        static void UpdateSecret(string secretName, string secretStatus, string clientId, string generatedOn, string secretValue = "")
+        {
+            var credential = new ClientSecretCredential("a5e8ce79-b0ec-41a2-a51c-aee927f1d808", "8b281262-415c-4a6c-91b9-246de71c17a9", "3tt8Q~xnvgt~kDmPdGlMoLxzmo8oC7Nf9OSlAcWy");
+            var keyVaultSecretClient = new SecretClient(new Uri("https://kv-astradb-astra.vault.azure.net/"), credential);
+
+            var theSecret = keyVaultSecretClient.GetSecret(secretName);
+
+            if (theSecret == null)
+            {
+                Console.WriteLine($"Can't find secret named {secretName}. Potential bug.");
+                return;
+            }
+
+            // cache the tags
+            var tags = theSecret.Value.Properties.Tags;
+
+            if (!string.IsNullOrWhiteSpace(secretValue))
+            {
+                Console.WriteLine($"Can't find secret named {secretName}. Potential bug.");
+            }
+  //          print(f'Creating new secret version: {theSecret.name} {theSecret.properties.tags}')
+  //  # update the secret, this will create new version WITHOUT the tags
+  //  secretClient.set_secret(secretName, secretValue)
+  //  # get the latest version
+  //  theSecret = secretClient.get_secret(secretName)
+
+  //print(f'Updating secret tags: {theSecret.name} {tags}')
+  //tags["clientId"] = clientId
+  //tags["status"] = secretStatus
+  //tags["generatedOn"] = generatedOn
+  //secretClient.update_secret_properties(secretName, content_type = "text/plain", tags = tags, not_before = datetime.now(pytz.timezone("Etc/GMT+12")), expires_on = datetime.now(pytz.timezone("Etc/GMT+12")) + timedelta(hours = secretExpiryHours))
         }
     }
 }
