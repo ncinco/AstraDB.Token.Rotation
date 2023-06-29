@@ -18,8 +18,8 @@ namespace AstraDB.Token.Rotation
                 BootstrapServers = brokerList,
                 SecurityProtocol = SecurityProtocol.SaslSsl,
                 SaslMechanism = SaslMechanism.Plain,
-                SaslUsername = "nR8Q6LKpCW3CNZ96n0PU9",
-                SaslPassword = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczovL2F1dGguY29uZHVrdG9yLmlvIiwic291cmNlQXBwbGljYXRpb24iOiJhZG1pbiIsInVzZXJNYWlsIjpudWxsLCJwYXlsb2FkIjp7InZhbGlkRm9yVXNlcm5hbWUiOiJuUjhRNkxLcENXM0NOWjk2bjBQVTkiLCJvcmdhbml6YXRpb25JZCI6NzQzMDEsInVzZXJJZCI6ODY0MzEsImZvckV4cGlyYXRpb25DaGVjayI6IjBhNTFlYWIxLWQ5NjctNGQwNS05MzQ5LTRkYzljNjNkNTgwNiJ9fQ.FENh-OXizfIiLGmjGOKuB1apTQLeyT-JteT2g2RcISU",
+                SaslUsername = "6tLgq4vZ2i75SbVx3KQbzN",
+                SaslPassword = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczovL2F1dGguY29uZHVrdG9yLmlvIiwic291cmNlQXBwbGljYXRpb24iOiJhZG1pbiIsInVzZXJNYWlsIjpudWxsLCJwYXlsb2FkIjp7InZhbGlkRm9yVXNlcm5hbWUiOiI2dExncTR2WjJpNzVTYlZ4M0tRYnpOIiwib3JnYW5pemF0aW9uSWQiOjc0MzMxLCJ1c2VySWQiOjg2NDMxLCJmb3JFeHBpcmF0aW9uQ2hlY2siOiJlYzU0ZWJiZi05M2QxLTQwMTItOWJlMi1iOGU0NDAyOGIwYzEifX0.NYc9bjulgrcGuJmSRGmLwFG7dU8RXDSqa-Kovqla_Zg",
             };
 
             using (var producer = new ProducerBuilder<long, string>(config).SetKeySerializer(Serializers.Int64).SetValueSerializer(Serializers.Utf8).Build())
@@ -49,7 +49,7 @@ namespace AstraDB.Token.Rotation
                     var generatedOn = secret.Tags["generatedOn"];
 
                     if (string.Compare(status, "active", true) == 0
-                        && (DateTime.Now - DateTime.Parse(generatedOn)).Minutes >= 3
+                        && (DateTime.UtcNow - DateTime.Parse(generatedOn)).Minutes >= 3
                         && secret.Name.Contains("-AccessToken"))
                     {
                         var seedClientId = secret.Tags["seed_clientId"];
@@ -78,6 +78,8 @@ namespace AstraDB.Token.Rotation
                         }
                     }
                 }
+
+                producer.Flush();
             }
         }
     }
