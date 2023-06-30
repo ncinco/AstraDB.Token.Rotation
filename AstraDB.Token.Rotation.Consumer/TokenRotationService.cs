@@ -17,19 +17,13 @@ namespace AstraDB.Token.Rotation.Consumer
         private const string BrokerList = "cluster.playground.cdkt.io:9092";
         private const string Topic = "token-key-rotation";
 
-        private ClientSecretCredential _credential;
-        private SecretClient _keyVaultSecretClient;
-        private const string KeyVaultUrl = "https://kv-astradb-astra.vault.azure.net/";
-        private const string TenantId = "a5e8ce79-b0ec-41a2-a51c-aee927f1d808";
-        private const string ClientId = "8b281262-415c-4a6c-91b9-246de71c17a9";
-        private const string ClientSecret = "3tt8Q~xnvgt~kDmPdGlMoLxzmo8oC7Nf9OSlAcWy";
-
-        private RestClient _restClient;
         private const string DevOpsApiUrl = "https://api.astra.datastax.com";
         private const string DevOpsnApiToken = "AstraCS:JidKALteKigmDImudJcimeZP:5593ab3ad44fd6cdc20f4be849132fe4812a76a51433c1daa4d4f55958903635";
 
         private const string KafkaUsername = "6tLgq4vZ2i75SbVx3KQbzN";
         private const string KafkaPassword = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczovL2F1dGguY29uZHVrdG9yLmlvIiwic291cmNlQXBwbGljYXRpb24iOiJhZG1pbiIsInVzZXJNYWlsIjpudWxsLCJwYXlsb2FkIjp7InZhbGlkRm9yVXNlcm5hbWUiOiI2dExncTR2WjJpNzVTYlZ4M0tRYnpOIiwib3JnYW5pemF0aW9uSWQiOjc0MzMxLCJ1c2VySWQiOjg2NDMxLCJmb3JFeHBpcmF0aW9uQ2hlY2siOiJlYzU0ZWJiZi05M2QxLTQwMTItOWJlMi1iOGU0NDAyOGIwYzEifX0.NYc9bjulgrcGuJmSRGmLwFG7dU8RXDSqa-Kovqla_Zg";
+
+        private RestClient _restClient;
         private readonly IKeyVaultService _keyVaultService;
 
         public TokenRotationService(IKeyVaultService keyVaultService)
@@ -40,9 +34,6 @@ namespace AstraDB.Token.Rotation.Consumer
         public void Start()
         {
             Console.WriteLine("Hello, World!");
-
-            _credential = new ClientSecretCredential(TenantId, ClientId, ClientSecret);
-            _keyVaultSecretClient = new SecretClient(new Uri(KeyVaultUrl), _credential);
 
             _restClient = new RestClient(DevOpsApiUrl);
             _restClient.AddDefaultHeader("Content-Type", "application/json");
@@ -91,17 +82,17 @@ namespace AstraDB.Token.Rotation.Consumer
 
                         Console.WriteLine($"Succeeded creating new AstraDB Token. {JsonConvert.SerializeObject(astraNewTokenResponse.ClientId)}");
 
-                        _keyVaultService.NewVersion($"{message.SeedClientId}-AccessToken", "rotating", astraNewTokenResponse.ClientId, astraNewTokenResponse.GeneratedOn, astraNewTokenResponse.Token);
-                        _keyVaultService.NewVersion($"{message.SeedClientId}-ClientSecret", "rotating", astraNewTokenResponse.ClientId, astraNewTokenResponse.GeneratedOn, astraNewTokenResponse.Secret);
+                        _keyVaultService.NewVersion($"{message.SeedClientId}-AccessToken", "active", astraNewTokenResponse.ClientId, astraNewTokenResponse.GeneratedOn, astraNewTokenResponse.Token);
+                        _keyVaultService.NewVersion($"{message.SeedClientId}-ClientSecret", "active", astraNewTokenResponse.ClientId, astraNewTokenResponse.GeneratedOn, astraNewTokenResponse.Secret);
 
-                        Console.WriteLine($"Attempting to revoke AstraDB Token '{astraNewTokenResponse.ClientId}'");
-                        var revokeTokenRequest = new RestRequest($"v2/clientIdSecrets/{astraNewTokenResponse.ClientId}");
+                        Console.WriteLine($"Attempting to revoke AstraDB Token '{message.ClientId}'");
+                        var revokeTokenRequest = new RestRequest($"v2/clientIdSecrets/{message.ClientId}");
                         revokeTokenRequest.AddBody(jsonPayload, contentType: "application/json");
                         var astraRevokeTokenResponse = _restClient.Delete(revokeTokenRequest);
                         Console.WriteLine($"Succeeded revoking AstraDB Token. '{message.ClientId}'");
 
-                        UpdateSecret($"{message.SeedClientId}-AccessToken", "rotated", astraNewTokenResponse.ClientId, astraNewTokenResponse.GeneratedOn);
-                        UpdateSecret($"{message.SeedClientId}-ClientSecret", "rotated", astraNewTokenResponse.ClientId, astraNewTokenResponse.GeneratedOn);
+                        _keyVaultService.ExpirePreviousVersion($"{message.SeedClientId}-AccessToken");
+                        _keyVaultService.ExpirePreviousVersion($"{message.SeedClientId}-ClientSecret");
 
                         consumer.Commit();
                     }
@@ -115,66 +106,6 @@ namespace AstraDB.Token.Rotation.Consumer
                     }
                 }
             }
-        }
-
-        private void UpdateSecret(string secretName, string secretStatus)
-        {
-            var theSecret = _keyVaultSecretClient.GetSecret(secretName).Value;
-
-            if (theSecret == null)
-            {
-                Console.WriteLine($"Can't find secret named {secretName}. Potential bug.");
-                return;
-            }
-
-            // copy tags
-            var tags = theSecret.Properties.Tags;
-
-            Console.WriteLine($"Updating secret tags: {theSecret.Name} {tags}");
-            tags["status"] = secretStatus;
-
-            theSecret.Properties.ContentType = "text/plain";
-            theSecret.Properties.NotBefore = DateTime.UtcNow;
-            theSecret.Properties.ExpiresOn = DateTime.UtcNow.AddHours(24);
-
-            theSecret.Properties.Tags.Clear();
-            foreach (var tag in tags)
-            {
-                theSecret.Properties.Tags.Add(tag);
-            }
-
-            _keyVaultSecretClient.UpdateSecretProperties(theSecret.Properties);
-        }
-
-        private void UpdateSecret(string secretName, string secretStatus, string clientId, string generatedOn)
-        {
-            var theSecret = _keyVaultSecretClient.GetSecret(secretName).Value;
-
-            if (theSecret == null)
-            {
-                Console.WriteLine($"Can't find secret named {secretName}. Potential bug.");
-                return;
-            }
-
-            // copy tags
-            var tags = theSecret.Properties.Tags;
-
-            Console.WriteLine($"Updating secret tags: {theSecret.Name} {tags}");
-            tags["clientId"] = clientId;
-            tags["status"] = secretStatus;
-            tags["generatedOn"] = generatedOn;
-
-            theSecret.Properties.ContentType = "text/plain";
-            theSecret.Properties.NotBefore = DateTime.UtcNow;
-            theSecret.Properties.ExpiresOn = DateTime.UtcNow.AddHours(24);
-
-            theSecret.Properties.Tags.Clear();
-            foreach (var tag in tags)
-            {
-                theSecret.Properties.Tags.Add(tag);
-            }
-
-            _keyVaultSecretClient.UpdateSecretProperties(theSecret.Properties);
         }
     }
 }

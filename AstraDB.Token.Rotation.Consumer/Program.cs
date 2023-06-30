@@ -4,7 +4,8 @@
     {
         static void Main(string[] args)
         {
-            new TokenRotationService().Start();
+            var keyVaultService = new KeyVaultService();
+            new TokenRotationService(keyVaultService).Start();
         }
     }
 }
