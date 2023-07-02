@@ -1,4 +1,5 @@
-﻿using AstraDB.Token.Rotation.Models;
+﻿using AstraDB.Token.Rotation.Configuration;
+using AstraDB.Token.Rotation.Models;
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
 using Confluent.Kafka;
@@ -10,23 +11,20 @@ namespace AstraDB.Token.Rotation
     {
         static void Main(string[] args)
         {
-            var brokerList = "cluster.playground.cdkt.io:9092";
-            var topic = "token-key-rotation";
-
             var config = new ProducerConfig
             {
-                BootstrapServers = brokerList,
+                BootstrapServers = Kafka.BrokerList,
                 SecurityProtocol = SecurityProtocol.SaslSsl,
                 SaslMechanism = SaslMechanism.Plain,
-                SaslUsername = "6tLgq4vZ2i75SbVx3KQbzN",
-                SaslPassword = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczovL2F1dGguY29uZHVrdG9yLmlvIiwic291cmNlQXBwbGljYXRpb24iOiJhZG1pbiIsInVzZXJNYWlsIjpudWxsLCJwYXlsb2FkIjp7InZhbGlkRm9yVXNlcm5hbWUiOiI2dExncTR2WjJpNzVTYlZ4M0tRYnpOIiwib3JnYW5pemF0aW9uSWQiOjc0MzMxLCJ1c2VySWQiOjg2NDMxLCJmb3JFeHBpcmF0aW9uQ2hlY2siOiJlYzU0ZWJiZi05M2QxLTQwMTItOWJlMi1iOGU0NDAyOGIwYzEifX0.NYc9bjulgrcGuJmSRGmLwFG7dU8RXDSqa-Kovqla_Zg",
+                SaslUsername = Kafka.Username,
+                SaslPassword = Kafka.Password
             };
 
             using (var producer = new ProducerBuilder<long, string>(config).SetKeySerializer(Serializers.Int64).SetValueSerializer(Serializers.Utf8).Build())
             {
-                var restClient = new RestClient("https://api.astra.datastax.com");
+                var restClient = new RestClient(DevOpsApi.Url);
                 restClient.AddDefaultHeader("Content-Type", "application/json");
-                restClient.AddDefaultHeader("Authorization", "Bearer AstraCS:JidKALteKigmDImudJcimeZP:5593ab3ad44fd6cdc20f4be849132fe4812a76a51433c1daa4d4f55958903635");
+                restClient.AddDefaultHeader("Authorization", $"Bearer {DevOpsApi.Token}");
 
 
                 Console.WriteLine("Attempting to fetch to AstraDB Tokens...");
@@ -36,8 +34,8 @@ namespace AstraDB.Token.Rotation
                 // just exit but unlikely
                 if (astraTokensResponse == null) return;
 
-                var credential = new ClientSecretCredential("a5e8ce79-b0ec-41a2-a51c-aee927f1d808", "8b281262-415c-4a6c-91b9-246de71c17a9", "3tt8Q~xnvgt~kDmPdGlMoLxzmo8oC7Nf9OSlAcWy");
-                var keyVaultSecretClient = new SecretClient(new Uri("https://kv-astradb-astra.vault.azure.net/"), credential);
+                var credential = new ClientSecretCredential(KeyVault.TenantId, KeyVault.ClientId, KeyVault.ClientSecret);
+                var keyVaultSecretClient = new SecretClient(new Uri(KeyVault.KeyVaultUrl), credential);
 
                 Console.WriteLine("Attempting to fetch to Key Vault Secrets...");
                 var keyVaultSecrets = keyVaultSecretClient.GetPropertiesOfSecrets();
@@ -72,7 +70,7 @@ namespace AstraDB.Token.Rotation
 
                             var messagePayloadJson = Newtonsoft.Json.JsonConvert.SerializeObject(messagePayload);
 
-                            producer.Produce(topic, new Message<long, string> { Key = key, Value = messagePayloadJson });
+                            producer.Produce(Kafka.Topic, new Message<long, string> { Key = key, Value = messagePayloadJson });
 
                             Console.WriteLine($"Message {key} sent (value: '{messagePayloadJson}')");
                         }

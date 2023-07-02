@@ -1,4 +1,5 @@
-﻿using Azure.Identity;
+﻿using AstraDB.Token.Rotation.Configuration;
+using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
 
 namespace AstraDB.Token.Rotation.Consumer
@@ -12,20 +13,15 @@ namespace AstraDB.Token.Rotation.Consumer
         bool ExpirePreviousVersion(string secretName);
     }
 
-    public class KeyVaultService : IKeyVaultService 
+    public class KeyVaultService : IKeyVaultService
     {
-        private const string KeyVaultUrl = "https://kv-astradb-astra.vault.azure.net/";
-        private const string TenantId = "a5e8ce79-b0ec-41a2-a51c-aee927f1d808";
-        private const string ClientId = "8b281262-415c-4a6c-91b9-246de71c17a9";
-        private const string ClientSecret = "3tt8Q~xnvgt~kDmPdGlMoLxzmo8oC7Nf9OSlAcWy";
-
         private ClientSecretCredential _credential;
         private SecretClient _keyVaultSecretClient;
 
         public KeyVaultService()
         {
-            _credential = new ClientSecretCredential(TenantId, ClientId, ClientSecret);
-            _keyVaultSecretClient = new SecretClient(new Uri(KeyVaultUrl), _credential);
+            _credential = new ClientSecretCredential(KeyVault.TenantId, KeyVault.ClientId, KeyVault.ClientSecret);
+            _keyVaultSecretClient = new SecretClient(new Uri(KeyVault.KeyVaultUrl), _credential);
         }
 
         public void NewVersion(string secretName, string secretStatus, string clientId, string generatedOn, string value)
@@ -109,7 +105,7 @@ namespace AstraDB.Token.Rotation.Consumer
                 .OrderByDescending(x => x.CreatedOn)
                 .FirstOrDefault(x => x.Version != theSecret.Properties.Version);
 
-            if(version == null)
+            if (version == null)
             {
                 // no other version, first one
                 return false;
@@ -117,7 +113,7 @@ namespace AstraDB.Token.Rotation.Consumer
 
             // disable, expire and status to rotated
             version.Enabled = false;
-            version.ExpiresOn= DateTime.UtcNow;
+            version.ExpiresOn = DateTime.UtcNow;
             version.Tags["status"] = "rotated";
 
             _keyVaultSecretClient.UpdateSecretProperties(version);
