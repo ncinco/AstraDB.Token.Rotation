@@ -10,7 +10,7 @@ namespace AstraDB.Token.Rotation.Consumer
 
         void UpdateSecret(string secretName, string secretStatus);
 
-        bool ExpirePreviousVersion(string secretName);
+        bool ExpirePreviousVersion(string secretName, string clientId);
     }
 
     public class KeyVaultService : IKeyVaultService
@@ -90,7 +90,7 @@ namespace AstraDB.Token.Rotation.Consumer
             _keyVaultSecretClient.UpdateSecretProperties(theSecret.Properties);
         }
 
-        public bool ExpirePreviousVersion(string secretName)
+        public bool ExpirePreviousVersion(string secretName, string clientId)
         {
             var theSecret = _keyVaultSecretClient.GetSecret(secretName).Value;
 
@@ -102,8 +102,8 @@ namespace AstraDB.Token.Rotation.Consumer
 
             var versions = _keyVaultSecretClient.GetPropertiesOfSecretVersions(secretName).ToList();
             var version = versions
-                .OrderByDescending(x => x.CreatedOn)
-                .FirstOrDefault(x => x.Version != theSecret.Properties.Version);
+                .FirstOrDefault(x => x.Version != theSecret.Properties.Version
+                        && x.Tags["clientId"] == clientId);
 
             if (version == null)
             {

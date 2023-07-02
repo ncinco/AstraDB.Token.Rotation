@@ -79,10 +79,8 @@ namespace AstraDB.Token.Rotation.Consumer
                         var astraRevokeTokenResponse = _restClient.Delete(revokeTokenRequest);
                         Console.WriteLine($"Succeeded revoking AstraDB Token. '{message.ClientId}'");
 
-                        _keyVaultService.ExpirePreviousVersion($"{message.SeedClientId}-AccessToken");
-                        _keyVaultService.ExpirePreviousVersion($"{message.SeedClientId}-ClientSecret");
-
-                        consumer.Commit();
+                        _keyVaultService.ExpirePreviousVersion($"{message.SeedClientId}-AccessToken", message.ClientId);
+                        _keyVaultService.ExpirePreviousVersion($"{message.SeedClientId}-ClientSecret", message.ClientId);
                     }
                     catch (ConsumeException e)
                     {

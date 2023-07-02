@@ -56,7 +56,7 @@ namespace AstraDB.Token.Rotation
                         Console.WriteLine($"Trying to rotate {seedClientId}-AccessToken and {seedClientId}-ClientSecret");
 
                         // find matching astradb token
-                        var theAstraDbToken = astraTokensResponse.Clients.FirstOrDefault(x => string.Compare(x.ClientId, clientId, true) == 0);
+                        var theAstraDbToken = astraTokensResponse.Clients.FirstOrDefault(x => string.Compare(x.ClientId, seedClientId, true) == 0);
 
                         if (theAstraDbToken != null)
                         {
