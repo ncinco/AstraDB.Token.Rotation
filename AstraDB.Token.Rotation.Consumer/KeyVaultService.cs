@@ -118,6 +118,10 @@ namespace AstraDB.Token.Rotation.Consumer
 
             _keyVaultSecretClient.UpdateSecretProperties(version);
 
+            // set the current version to active
+            theSecret.Properties.Tags["status"] = "active";
+            _keyVaultSecretClient.UpdateSecretProperties(theSecret.Properties);
+
             return true;
         }
     }

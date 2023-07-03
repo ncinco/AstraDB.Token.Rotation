@@ -38,7 +38,7 @@ namespace AstraDB.Token.Rotation.Consumer
                 SaslUsername = Kafka.Username,
                 SaslPassword = Kafka.Password,
                 AutoOffsetReset = AutoOffsetReset.Earliest,
-                GroupId = "$Default",
+                GroupId = Kafka.ConsumerGroup,
                 BrokerVersionFallback = "1.0.0",
             };
 
@@ -59,28 +59,18 @@ namespace AstraDB.Token.Rotation.Consumer
                         var message = JsonConvert.DeserializeObject<EventStreamTokenRotationMessage>(msg.Message.Value);
                         Console.WriteLine($"Received: '{msg.Message.Value}'");
 
-                        Console.WriteLine("Attempting to create new AstraDB Token...");
+                        Console.WriteLine("Attempting to create new astradb token...");
                         var createTokenRequest = new RestRequest("v2/clientIdSecrets");
-
                         var jsonPayload = @"{""roles"": " + JsonConvert.SerializeObject(message.Roles) + "}";
                         createTokenRequest.AddBody(jsonPayload, contentType: "application/json");
-
                         var response = _restClient.Post(createTokenRequest);
                         var astraNewTokenResponse = JsonConvert.DeserializeObject<AstraNewTokenResponse>(response.Content);
+                        Console.WriteLine($"Succeeded creating new astradb token. {JsonConvert.SerializeObject(astraNewTokenResponse.ClientId)}");
 
-                        Console.WriteLine($"Succeeded creating new AstraDB Token. {JsonConvert.SerializeObject(astraNewTokenResponse.ClientId)}");
-
-                        _keyVaultService.NewVersion($"{message.SeedClientId}-AccessToken", "active", astraNewTokenResponse.ClientId, astraNewTokenResponse.GeneratedOn, astraNewTokenResponse.Token);
-                        _keyVaultService.NewVersion($"{message.SeedClientId}-ClientSecret", "active", astraNewTokenResponse.ClientId, astraNewTokenResponse.GeneratedOn, astraNewTokenResponse.Secret);
-
-                        Console.WriteLine($"Attempting to revoke AstraDB Token '{message.ClientId}'");
-                        var revokeTokenRequest = new RestRequest($"v2/clientIdSecrets/{message.ClientId}");
-                        revokeTokenRequest.AddBody(jsonPayload, contentType: "application/json");
-                        var astraRevokeTokenResponse = _restClient.Delete(revokeTokenRequest);
-                        Console.WriteLine($"Succeeded revoking AstraDB Token. '{message.ClientId}'");
-
-                        _keyVaultService.ExpirePreviousVersion($"{message.SeedClientId}-AccessToken", message.ClientId);
-                        _keyVaultService.ExpirePreviousVersion($"{message.SeedClientId}-ClientSecret", message.ClientId);
+                        Console.WriteLine("Attempting to create new key vault version with new astradb token...");
+                        _keyVaultService.NewVersion($"{message.SeedClientId}-AccessToken", "rotating", astraNewTokenResponse.ClientId, astraNewTokenResponse.GeneratedOn, astraNewTokenResponse.Token);
+                        _keyVaultService.NewVersion($"{message.SeedClientId}-ClientSecret", "rotating", astraNewTokenResponse.ClientId, astraNewTokenResponse.GeneratedOn, astraNewTokenResponse.Secret);
+                        Console.WriteLine("Succeeded creating new key vault version...");
                     }
                     catch (ConsumeException e)
                     {

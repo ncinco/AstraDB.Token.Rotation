@@ -21,6 +21,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\AstraDB.Token.Rotation.Configuration\AstraDB.Token.Rotation.Configuration.csproj" />
+    <ProjectReference Include="..\AstraDB.Token.Rotation.Consumer\AstraDB.Token.Rotation.Consumer.csproj" />
     <ProjectReference Include="..\AstraDB.Token.Rotation.Models\AstraDB.Token.Rotation.Models.csproj" />
   </ItemGroup>
 
