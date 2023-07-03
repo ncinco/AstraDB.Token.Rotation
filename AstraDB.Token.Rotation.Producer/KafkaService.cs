@@ -75,7 +75,7 @@ namespace AstraDB.Token.Rotation.Producer
                         Console.WriteLine($"Trying to rotate {seedClientId}-AccessToken and {seedClientId}-ClientSecret");
 
                         // find matching astradb token
-                        var theAstraDbToken = astraTokensResponse.Clients.FirstOrDefault(x => string.Compare(x.ClientId, seedClientId, true) == 0);
+                        var theAstraDbToken = astraTokensResponse.Clients.FirstOrDefault(x => string.Compare(x.ClientId, clientId, true) == 0);
 
                         if (theAstraDbToken != null)
                         {
@@ -117,7 +117,7 @@ namespace AstraDB.Token.Rotation.Producer
 
             // process just the rotating status with name contains "-AccessToken" since they come in pairs
             foreach (var secret in keyVaultSecrets
-                .Where(x => string.Compare(x.Tags["status"], "rotating") == 0
+                .Where(x => string.Compare(x.Tags["status"], "active") == 0
                 && x.Name.Contains("-AccessToken")))
             {
                 var seedClientId = secret.Tags["seed_clientId"];

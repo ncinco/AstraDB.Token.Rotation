@@ -9,7 +9,7 @@ namespace AstraDB.Token.Rotation
         {
             var keyVaultService = new KeyVaultService();
             var kafkaService = new KafkaService(keyVaultService);
-            kafkaService.ProduceMessages();
+            //kafkaService.ProduceMessages();
             kafkaService.ExpireTokens();
         }
     }

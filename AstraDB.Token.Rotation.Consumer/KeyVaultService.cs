@@ -1,6 +1,7 @@
 ﻿using AstraDB.Token.Rotation.Configuration;
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
+using System;
 
 namespace AstraDB.Token.Rotation.Consumer
 {
@@ -37,13 +38,13 @@ namespace AstraDB.Token.Rotation.Consumer
             // copy tags
             var tags = theSecret.Properties.Tags;
 
-            Console.WriteLine($"Creating new secret version: {theSecret.Name} {tags}");
+            Console.WriteLine($"Creating new secret version: {theSecret.Name}");
             // update the secret, this will create new version WITHOUT the tags
             _keyVaultSecretClient.SetSecret(secretName, value);
             // get the latest version
             theSecret = _keyVaultSecretClient.GetSecret(secretName);
 
-            Console.WriteLine($"Updating secret tags: {theSecret.Name} {tags}");
+            Console.WriteLine($"Updating secret tags: {theSecret.Name}");
             tags["clientId"] = clientId;
             tags["status"] = secretStatus;
             tags["generatedOn"] = generatedOn;
@@ -63,31 +64,22 @@ namespace AstraDB.Token.Rotation.Consumer
 
         public void UpdateSecret(string secretName, string secretStatus)
         {
-            var theSecret = _keyVaultSecretClient.GetSecret(secretName).Value;
+            var theCurrentSecret = _keyVaultSecretClient.GetSecret(secretName).Value;
 
-            if (theSecret == null)
+            var previousVersion = _keyVaultSecretClient
+                .GetPropertiesOfSecretVersions(secretName)
+                .FirstOrDefault(x => x.Version != theCurrentSecret.Properties.Version);
+
+            if (previousVersion == null)
             {
                 Console.WriteLine($"Can't find secret named {secretName}. Potential bug.");
                 return;
             }
 
             // copy tags
-            var tags = theSecret.Properties.Tags;
-
-            Console.WriteLine($"Updating secret tags: {theSecret.Name} {tags}");
-            tags["status"] = secretStatus;
-
-            theSecret.Properties.ContentType = "text/plain";
-            theSecret.Properties.NotBefore = DateTime.UtcNow;
-            theSecret.Properties.ExpiresOn = DateTime.UtcNow.AddHours(24);
-
-            theSecret.Properties.Tags.Clear();
-            foreach (var tag in tags)
-            {
-                theSecret.Properties.Tags.Add(tag);
-            }
-
-            _keyVaultSecretClient.UpdateSecretProperties(theSecret.Properties);
+            Console.WriteLine($"Updating secret tags: {previousVersion.Name}");
+            previousVersion.Tags["status"] = secretStatus;
+            _keyVaultSecretClient.UpdateSecretProperties(previousVersion);
         }
 
         public bool ExpirePreviousVersion(string secretName, string clientId)
@@ -100,10 +92,9 @@ namespace AstraDB.Token.Rotation.Consumer
                 return false;
             }
 
-            var versions = _keyVaultSecretClient.GetPropertiesOfSecretVersions(secretName).ToList();
-            var version = versions
-                .FirstOrDefault(x => x.Version != theSecret.Properties.Version
-                        && x.Tags["clientId"] == clientId);
+            var version = _keyVaultSecretClient
+                .GetPropertiesOfSecretVersions(secretName)
+                .FirstOrDefault(x => x.Version != theSecret.Properties.Version);
 
             if (version == null)
             {
@@ -117,10 +108,6 @@ namespace AstraDB.Token.Rotation.Consumer
             version.Tags["status"] = "rotated";
 
             _keyVaultSecretClient.UpdateSecretProperties(version);
-
-            // set the current version to active
-            theSecret.Properties.Tags["status"] = "active";
-            _keyVaultSecretClient.UpdateSecretProperties(theSecret.Properties);
 
             return true;
         }

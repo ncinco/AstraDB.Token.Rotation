@@ -68,9 +68,14 @@ namespace AstraDB.Token.Rotation.Consumer
                         Console.WriteLine($"Succeeded creating new astradb token. {JsonConvert.SerializeObject(astraNewTokenResponse.ClientId)}");
 
                         Console.WriteLine("Attempting to create new key vault version with new astradb token...");
-                        _keyVaultService.NewVersion($"{message.SeedClientId}-AccessToken", "rotating", astraNewTokenResponse.ClientId, astraNewTokenResponse.GeneratedOn, astraNewTokenResponse.Token);
-                        _keyVaultService.NewVersion($"{message.SeedClientId}-ClientSecret", "rotating", astraNewTokenResponse.ClientId, astraNewTokenResponse.GeneratedOn, astraNewTokenResponse.Secret);
+                        _keyVaultService.NewVersion($"{message.SeedClientId}-AccessToken", "active", astraNewTokenResponse.ClientId, astraNewTokenResponse.GeneratedOn, astraNewTokenResponse.Token);
+                        _keyVaultService.NewVersion($"{message.SeedClientId}-ClientSecret", "active", astraNewTokenResponse.ClientId, astraNewTokenResponse.GeneratedOn, astraNewTokenResponse.Secret);
                         Console.WriteLine("Succeeded creating new key vault version...");
+
+                        Console.WriteLine("Attempting to set previous key vault version to rotating status...");
+                        _keyVaultService.UpdateSecret($"{message.SeedClientId}-AccessToken", "rotating");
+                        _keyVaultService.UpdateSecret($"{message.SeedClientId}-ClientSecret", "rotating");
+                        Console.WriteLine("Succeeded setting previous key vault version to rotating status...");
                     }
                     catch (ConsumeException e)
                     {

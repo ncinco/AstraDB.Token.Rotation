@@ -2,6 +2,8 @@
 {
     public class Kafka
     {
+        public const string ConsumerGroup = "$Default";
+
         public const string BrokerList = "token-management.servicebus.windows.net:9093";
         public const string Topic = "token-rotation";
 
