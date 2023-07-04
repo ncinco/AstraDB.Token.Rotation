@@ -21,10 +21,15 @@ namespace AstraDB.Token.Rotation.Producer
     {
         private RestClient _restClient;
         private readonly IKeyVaultService _keyVaultService;
+        private readonly ClientSecretCredential _credential;
+        private readonly SecretClient _keyVaultSecretClient;
 
         public KafkaService(IKeyVaultService keyVaultService)
         {
             _keyVaultService = keyVaultService;
+
+            _credential = new ClientSecretCredential(KeyVault.TenantId, KeyVault.ClientId, KeyVault.ClientSecret);
+            _keyVaultSecretClient = new SecretClient(new Uri(KeyVault.KeyVaultUrl), _credential);
         }
 
         public void ProduceMessages()
@@ -51,26 +56,23 @@ namespace AstraDB.Token.Rotation.Producer
                 // just exit but unlikely
                 if (astraTokensResponse == null) return;
 
-                var credential = new ClientSecretCredential(KeyVault.TenantId, KeyVault.ClientId, KeyVault.ClientSecret);
-                var keyVaultSecretClient = new SecretClient(new Uri(KeyVault.KeyVaultUrl), credential);
-
                 Console.WriteLine("Attempting to fetch to Key Vault Secrets...");
-                var keyVaultSecrets = keyVaultSecretClient
+                var keyVaultSecrets = _keyVaultSecretClient
                     .GetPropertiesOfSecrets()
                     .ToList();
                 Console.WriteLine("Succeeded fetching Key Vault Secrets.");
 
                 foreach (var secret in keyVaultSecrets)
                 {
-                    var status = secret.Tags["status"];
-                    var generatedOn = secret.Tags["generatedOn"];
+                    var status = secret.Tags[KeyVaultTags.Status];
+                    var generatedOn = secret.Tags[KeyVaultTags.GeneratedOn];
 
-                    if (string.Compare(status, "active", true) == 0
+                    if (string.Compare(status, KeyVaultTagStatus.Active, true) == 0
                         && (DateTime.UtcNow - DateTime.Parse(generatedOn)).Minutes >= 3
                         && secret.Name.Contains("-AccessToken"))
                     {
-                        var seedClientId = secret.Tags["seed_clientId"];
-                        var clientId = secret.Tags["clientId"];
+                        var seedClientId = secret.Tags[KeyVaultTags.SeedClientId];
+                        var clientId = secret.Tags[KeyVaultTags.ClientId];
 
                         Console.WriteLine($"Trying to rotate {seedClientId}-AccessToken and {seedClientId}-ClientSecret");
 
@@ -106,33 +108,42 @@ namespace AstraDB.Token.Rotation.Producer
             _restClient.AddDefaultHeader("Content-Type", "application/json");
             _restClient.AddDefaultHeader("Authorization", $"Bearer {DevOpsApi.Token}");
 
-            var credential = new ClientSecretCredential(KeyVault.TenantId, KeyVault.ClientId, KeyVault.ClientSecret);
-            var keyVaultSecretClient = new SecretClient(new Uri(KeyVault.KeyVaultUrl), credential);
-
             Console.WriteLine("Attempting to fetch to Key Vault Secrets...");
-            var keyVaultSecrets = keyVaultSecretClient
+            var keyVaultSecrets = _keyVaultSecretClient
                 .GetPropertiesOfSecrets()
                 .ToList();
             Console.WriteLine("Succeeded fetching Key Vault Secrets.");
 
             // process just the rotating status with name contains "-AccessToken" since they come in pairs
             foreach (var secret in keyVaultSecrets
-                .Where(x => string.Compare(x.Tags["status"], "active") == 0
+                .Where(x => string.Compare(x.Tags[KeyVaultTags.Status], KeyVaultTagStatus.Active) == 0
                 && x.Name.Contains("-AccessToken")))
             {
-                var seedClientId = secret.Tags["seed_clientId"];
-                var clientId = secret.Tags["clientId"];
+                // only delete token and expire previous version when status rotating
+                if (HasRotatingVersion(secret.Name))
+                {
+                    var seedClientId = secret.Tags[KeyVaultTags.SeedClientId];
+                    var clientId = secret.Tags[KeyVaultTags.ClientId];
 
-                Console.WriteLine($"Attempting to revoke old astradb token '{clientId}'");
-                var revokeTokenRequest = new RestRequest($"v2/clientIdSecrets/{clientId}");
-                var astraRevokeTokenResponse = _restClient.Delete(revokeTokenRequest);
-                Console.WriteLine($"Succeeded revoking old astradb token. '{clientId}'");
+                    Console.WriteLine($"Attempting to revoke old astradb token '{clientId}'");
+                    var revokeTokenRequest = new RestRequest($"v2/clientIdSecrets/{clientId}");
+                    var astraRevokeTokenResponse = _restClient.Delete(revokeTokenRequest);
+                    Console.WriteLine($"Succeeded revoking old astradb token. '{clientId}'");
 
-                Console.WriteLine($"Attempting expiring old key vault version. ({clientId})");
-                _keyVaultService.ExpirePreviousVersion($"{seedClientId}-AccessToken", clientId);
-                _keyVaultService.ExpirePreviousVersion($"{seedClientId}-ClientSecret", clientId);
-                Console.WriteLine($"Succeeded to create new key kault version. ({clientId})");
+                    Console.WriteLine($"Attempting expiring old key vault version. ({clientId})");
+                    _keyVaultService.ExpirePreviousVersion($"{seedClientId}-AccessToken", clientId);
+                    _keyVaultService.ExpirePreviousVersion($"{seedClientId}-ClientSecret", clientId);
+                    Console.WriteLine($"Succeeded to create new key kault version. ({clientId})");
+                }
             }
+        }
+
+        private bool HasRotatingVersion(string secret)
+        {
+            var versions = _keyVaultSecretClient.GetPropertiesOfSecretVersions(secret);
+            var rotatingVersion = versions.FirstOrDefault(x => x.Tags[KeyVaultTags.Status] ==  KeyVaultTagStatus.Rotating);
+
+            return (rotatingVersion != null);
         }
     }
 }

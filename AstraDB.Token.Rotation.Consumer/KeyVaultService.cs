@@ -1,7 +1,6 @@
 ﻿using AstraDB.Token.Rotation.Configuration;
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
-using System;
 
 namespace AstraDB.Token.Rotation.Consumer
 {
@@ -45,8 +44,8 @@ namespace AstraDB.Token.Rotation.Consumer
             theSecret = _keyVaultSecretClient.GetSecret(secretName);
 
             Console.WriteLine($"Updating secret tags: {theSecret.Name}");
-            tags["clientId"] = clientId;
-            tags["status"] = secretStatus;
+            tags[KeyVaultTags.ClientId] = clientId;
+            tags[KeyVaultTags.Status] = secretStatus;
             tags["generatedOn"] = generatedOn;
 
             theSecret.Properties.ContentType = "text/plain";
@@ -78,7 +77,7 @@ namespace AstraDB.Token.Rotation.Consumer
 
             // copy tags
             Console.WriteLine($"Updating secret tags: {previousVersion.Name}");
-            previousVersion.Tags["status"] = secretStatus;
+            previousVersion.Tags[KeyVaultTags.Status] = secretStatus;
             _keyVaultSecretClient.UpdateSecretProperties(previousVersion);
         }
 
@@ -94,7 +93,8 @@ namespace AstraDB.Token.Rotation.Consumer
 
             var version = _keyVaultSecretClient
                 .GetPropertiesOfSecretVersions(secretName)
-                .FirstOrDefault(x => x.Version != theSecret.Properties.Version);
+                .FirstOrDefault(x => x.Version != theSecret.Properties.Version
+                    && x.Tags[KeyVaultTags.Status] == KeyVaultTagStatus.Rotating);
 
             if (version == null)
             {
@@ -105,7 +105,7 @@ namespace AstraDB.Token.Rotation.Consumer
             // disable, expire and status to rotated
             version.Enabled = false;
             version.ExpiresOn = DateTime.UtcNow;
-            version.Tags["status"] = "rotated";
+            version.Tags[KeyVaultTags.Status] = KeyVaultTagStatus.Rotated;
 
             _keyVaultSecretClient.UpdateSecretProperties(version);
 
