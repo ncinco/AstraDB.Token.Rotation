@@ -15,6 +15,8 @@ namespace AstraDB.Token.Rotation.Producer
         void ProduceMessages();
 
         void ExpireTokens();
+
+        List<SecretProperties> GetVersions(string secretName);
     }
 
     public class KafkaService
@@ -67,7 +69,7 @@ namespace AstraDB.Token.Rotation.Producer
                     var status = secret.Tags[KeyVaultTags.Status];
                     var generatedOn = secret.Tags[KeyVaultTags.GeneratedOn];
 
-                    if (string.Compare(status, KeyVaultTagStatus.Active, true) == 0
+                    if (string.Compare(status, KeyVaultStatus.Active, true) == 0
                         && (DateTime.UtcNow - DateTime.Parse(generatedOn)).Minutes >= 3
                         && secret.Name.Contains("-AccessToken"))
                     {
@@ -116,34 +118,34 @@ namespace AstraDB.Token.Rotation.Producer
 
             // process just the rotating status with name contains "-AccessToken" since they come in pairs
             foreach (var secret in keyVaultSecrets
-                .Where(x => string.Compare(x.Tags[KeyVaultTags.Status], KeyVaultTagStatus.Active) == 0
+                .Where(x => string.Compare(x.Tags[KeyVaultTags.Status], KeyVaultStatus.Active) == 0
                 && x.Name.Contains("-AccessToken")))
             {
-                // only delete token and expire previous version when status rotating
-                if (HasRotatingVersion(secret.Name))
+
+                var previousVersion = _keyVaultService.GetPreviousVersion(secret.Name);
+
+                // delete old token and expire previous version
+                if (previousVersion != null)
                 {
                     var seedClientId = secret.Tags[KeyVaultTags.SeedClientId];
-                    var clientId = secret.Tags[KeyVaultTags.ClientId];
+                    var previousClientId = previousVersion.Tags[KeyVaultTags.ClientId];
 
-                    Console.WriteLine($"Attempting to revoke old astradb token '{clientId}'");
-                    var revokeTokenRequest = new RestRequest($"v2/clientIdSecrets/{clientId}");
+                    Console.WriteLine($"Attempting to revoke old astradb token '{previousClientId}'");
+                    var revokeTokenRequest = new RestRequest($"v2/clientIdSecrets/{previousClientId}");
                     var astraRevokeTokenResponse = _restClient.Delete(revokeTokenRequest);
-                    Console.WriteLine($"Succeeded revoking old astradb token. '{clientId}'");
+                    Console.WriteLine($"Succeeded revoking old astradb token. '{previousClientId}'");
 
-                    Console.WriteLine($"Attempting expiring old key vault version. ({clientId})");
-                    _keyVaultService.ExpirePreviousVersion($"{seedClientId}-AccessToken", clientId);
-                    _keyVaultService.ExpirePreviousVersion($"{seedClientId}-ClientSecret", clientId);
-                    Console.WriteLine($"Succeeded to create new key kault version. ({clientId})");
+                    Console.WriteLine($"Attempting expiring old key vault version. ({previousClientId})");
+                    _keyVaultService.ExpirePreviousVersion($"{seedClientId}-AccessToken", previousClientId);
+                    _keyVaultService.ExpirePreviousVersion($"{seedClientId}-ClientSecret", previousClientId);
+                    Console.WriteLine($"Succeeded to create new key kault version. ({previousClientId})");
                 }
             }
         }
 
-        private bool HasRotatingVersion(string secret)
+        public List<SecretProperties> GetVersions(string secretName)
         {
-            var versions = _keyVaultSecretClient.GetPropertiesOfSecretVersions(secret);
-            var rotatingVersion = versions.FirstOrDefault(x => x.Tags[KeyVaultTags.Status] ==  KeyVaultTagStatus.Rotating);
-
-            return (rotatingVersion != null);
+            return _keyVaultSecretClient.GetPropertiesOfSecretVersions(secretName).ToList();
         }
     }
 }

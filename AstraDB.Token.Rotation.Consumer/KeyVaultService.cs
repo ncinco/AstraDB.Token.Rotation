@@ -8,7 +8,9 @@ namespace AstraDB.Token.Rotation.Consumer
     {
         void NewVersion(string secretName, string secretStatus, string clientId, string generatedOn, string value);
 
-        void UpdateSecret(string secretName, string secretStatus);
+        void SetPerviousVersionToRotating(string secretName);
+
+        SecretProperties GetPreviousVersion(string secretName);
 
         bool ExpirePreviousVersion(string secretName, string clientId);
     }
@@ -61,13 +63,15 @@ namespace AstraDB.Token.Rotation.Consumer
             _keyVaultSecretClient.UpdateSecretProperties(theSecret.Properties);
         }
 
-        public void UpdateSecret(string secretName, string secretStatus)
+        public void SetPerviousVersionToRotating(string secretName)
         {
             var theCurrentSecret = _keyVaultSecretClient.GetSecret(secretName).Value;
 
             var previousVersion = _keyVaultSecretClient
                 .GetPropertiesOfSecretVersions(secretName)
-                .FirstOrDefault(x => x.Version != theCurrentSecret.Properties.Version);
+                .OrderByDescending(x => x.CreatedOn)
+                .FirstOrDefault(x => x.Version != theCurrentSecret.Properties.Version
+                && x.Tags[KeyVaultTags.Status] == KeyVaultStatus.Active);
 
             if (previousVersion == null)
             {
@@ -77,8 +81,26 @@ namespace AstraDB.Token.Rotation.Consumer
 
             // copy tags
             Console.WriteLine($"Updating secret tags: {previousVersion.Name}");
-            previousVersion.Tags[KeyVaultTags.Status] = secretStatus;
+            previousVersion.Tags[KeyVaultTags.Status] = KeyVaultStatus.Rotating;
             _keyVaultSecretClient.UpdateSecretProperties(previousVersion);
+        }
+
+        public SecretProperties GetPreviousVersion(string secretName)
+        {
+            var theCurrentSecret = _keyVaultSecretClient.GetSecret(secretName).Value;
+
+            var previousVersion = _keyVaultSecretClient
+                .GetPropertiesOfSecretVersions(secretName)
+                .OrderByDescending(x => x.CreatedOn)
+                .FirstOrDefault(x => x.Version != theCurrentSecret.Properties.Version
+                && x.Tags[KeyVaultTags.Status] == KeyVaultStatus.Active);
+
+            if (previousVersion == null)
+            {
+                Console.WriteLine($"Can't find secret named {secretName}. Potential bug.");
+            }
+
+            return previousVersion;
         }
 
         public bool ExpirePreviousVersion(string secretName, string clientId)
@@ -91,23 +113,20 @@ namespace AstraDB.Token.Rotation.Consumer
                 return false;
             }
 
-            var version = _keyVaultSecretClient
-                .GetPropertiesOfSecretVersions(secretName)
-                .FirstOrDefault(x => x.Version != theSecret.Properties.Version
-                    && x.Tags[KeyVaultTags.Status] == KeyVaultTagStatus.Rotating);
+            var previousVersion = GetPreviousVersion(secretName);
 
-            if (version == null)
+            if (previousVersion == null)
             {
                 // no other version, first one
                 return false;
             }
 
             // disable, expire and status to rotated
-            version.Enabled = false;
-            version.ExpiresOn = DateTime.UtcNow;
-            version.Tags[KeyVaultTags.Status] = KeyVaultTagStatus.Rotated;
+            previousVersion.Enabled = false;
+            previousVersion.ExpiresOn = DateTime.UtcNow;
+            previousVersion.Tags[KeyVaultTags.Status] = KeyVaultStatus.Rotated;
 
-            _keyVaultSecretClient.UpdateSecretProperties(version);
+            _keyVaultSecretClient.UpdateSecretProperties(previousVersion);
 
             return true;
         }

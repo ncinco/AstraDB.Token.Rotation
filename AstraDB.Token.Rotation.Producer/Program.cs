@@ -11,6 +11,17 @@ namespace AstraDB.Token.Rotation
             var kafkaService = new KafkaService(keyVaultService);
             //kafkaService.ProduceMessages();
             kafkaService.ExpireTokens();
+
+           //var versions = kafkaService
+           //     .GetVersions("cTfGrnObigDGnNHRXbPFYfKK-AccessToken")
+           //     .OrderByDescending(x => x.CreatedOn)
+           //     .ToList();
+           // versions.ForEach(version =>
+           // {
+           //     Console.WriteLine($"version.Version: {version.Version} version.CreatedOn: {version.CreatedOn}" );
+           // });
+
+            
         }
     }
 }

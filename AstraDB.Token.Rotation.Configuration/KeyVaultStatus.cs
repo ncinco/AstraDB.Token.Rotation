@@ -11,7 +11,7 @@
         public const string GeneratedOn = "generatedOn";
     }
 
-    public class KeyVaultTagStatus
+    public class KeyVaultStatus
     {
         public const string Active = "active";
 
