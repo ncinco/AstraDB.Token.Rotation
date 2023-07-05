@@ -2,7 +2,7 @@
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
 
-namespace AstraDB.Token.Rotation.Consumer
+namespace AstraDB.Token.Rotation.Services
 {
     public interface IKeyVaultService
     {
@@ -10,19 +10,22 @@ namespace AstraDB.Token.Rotation.Consumer
 
         void SetPerviousVersionToRotating(string secretName);
 
-        SecretProperties GetPreviousVersion(string secretName);
+        KeyVaultSecret GetSecret(string secretName);
 
-        bool ExpirePreviousVersion(string secretName, string clientId);
+        List<SecretProperties> GetPropertiesOfSecrets();
+
+        SecretProperties GetPreviousVersion(KeyVaultSecret secret);
+
+        bool ExpirePreviousVersion(SecretProperties previousVersion);
     }
 
     public class KeyVaultService : IKeyVaultService
     {
-        private ClientSecretCredential _credential;
-        private SecretClient _keyVaultSecretClient;
+        private readonly SecretClient _keyVaultSecretClient;
 
         public KeyVaultService()
         {
-            _credential = new ClientSecretCredential(KeyVault.TenantId, KeyVault.ClientId, KeyVault.ClientSecret);
+            var _credential = new ClientSecretCredential(KeyVault.TenantId, KeyVault.ClientId, KeyVault.ClientSecret);
             _keyVaultSecretClient = new SecretClient(new Uri(KeyVault.KeyVaultUrl), _credential);
         }
 
@@ -67,11 +70,7 @@ namespace AstraDB.Token.Rotation.Consumer
         {
             var theCurrentSecret = _keyVaultSecretClient.GetSecret(secretName).Value;
 
-            var previousVersion = _keyVaultSecretClient
-                .GetPropertiesOfSecretVersions(secretName)
-                .OrderByDescending(x => x.CreatedOn)
-                .FirstOrDefault(x => x.Version != theCurrentSecret.Properties.Version
-                && x.Tags[KeyVaultTags.Status] == KeyVaultStatus.Active);
+            var previousVersion = GetPreviousVersion(theCurrentSecret);
 
             if (previousVersion == null)
             {
@@ -79,42 +78,43 @@ namespace AstraDB.Token.Rotation.Consumer
                 return;
             }
 
-            // copy tags
+            // update status tag
             Console.WriteLine($"Updating secret tags: {previousVersion.Name}");
             previousVersion.Tags[KeyVaultTags.Status] = KeyVaultStatus.Rotating;
             _keyVaultSecretClient.UpdateSecretProperties(previousVersion);
         }
 
-        public SecretProperties GetPreviousVersion(string secretName)
+        public KeyVaultSecret GetSecret(string secretName)
         {
-            var theCurrentSecret = _keyVaultSecretClient.GetSecret(secretName).Value;
+            return _keyVaultSecretClient
+                .GetSecret(secretName);
+        }
 
+        public List<SecretProperties> GetPropertiesOfSecrets()
+        {
+            return _keyVaultSecretClient
+                .GetPropertiesOfSecrets()
+                .ToList();
+        }
+
+        public SecretProperties GetPreviousVersion(KeyVaultSecret secret)
+        {
             var previousVersion = _keyVaultSecretClient
-                .GetPropertiesOfSecretVersions(secretName)
+                .GetPropertiesOfSecretVersions(secret.Name)
                 .OrderByDescending(x => x.CreatedOn)
-                .FirstOrDefault(x => x.Version != theCurrentSecret.Properties.Version
-                && x.Tags[KeyVaultTags.Status] == KeyVaultStatus.Active);
+                .FirstOrDefault(x => x.Version != secret.Properties.Version
+                    && x.Tags[KeyVaultTags.Status] == KeyVaultStatus.Rotating);
 
             if (previousVersion == null)
             {
-                Console.WriteLine($"Can't find secret named {secretName}. Potential bug.");
+                Console.WriteLine($"Can't find secret named {secret.Name}. Potential bug.");
             }
 
             return previousVersion;
         }
 
-        public bool ExpirePreviousVersion(string secretName, string clientId)
+        public bool ExpirePreviousVersion(SecretProperties previousVersion)
         {
-            var theSecret = _keyVaultSecretClient.GetSecret(secretName).Value;
-
-            if (theSecret == null)
-            {
-                Console.WriteLine($"Can't find secret named {secretName}. Potential bug.");
-                return false;
-            }
-
-            var previousVersion = GetPreviousVersion(secretName);
-
             if (previousVersion == null)
             {
                 // no other version, first one

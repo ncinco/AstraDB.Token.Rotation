@@ -1,7 +1,6 @@
-﻿using AstraDB.Token.Rotation.Consumer;
-using AstraDB.Token.Rotation.Producer;
+﻿using AstraDB.Token.Rotation.Services;
 
-namespace AstraDB.Token.Rotation
+namespace AstraDB.Token.Rotation.Producer
 {
     internal class Program
     {
@@ -11,17 +10,6 @@ namespace AstraDB.Token.Rotation
             var kafkaService = new KafkaService(keyVaultService);
             //kafkaService.ProduceMessages();
             kafkaService.ExpireTokens();
-
-           //var versions = kafkaService
-           //     .GetVersions("cTfGrnObigDGnNHRXbPFYfKK-AccessToken")
-           //     .OrderByDescending(x => x.CreatedOn)
-           //     .ToList();
-           // versions.ForEach(version =>
-           // {
-           //     Console.WriteLine($"version.Version: {version.Version} version.CreatedOn: {version.CreatedOn}" );
-           // });
-
-            
         }
     }
 }

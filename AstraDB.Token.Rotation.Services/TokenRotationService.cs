@@ -4,29 +4,31 @@ using Confluent.Kafka;
 using Newtonsoft.Json;
 using RestSharp;
 
-namespace AstraDB.Token.Rotation.Consumer
+namespace AstraDB.Token.Rotation.Services
 {
     public interface ITokenRotationService
     {
-        void Start();
+        void ConsumerMessages();
+
+        void ExpireTokens();
     }
 
     public class TokenRotationService : ITokenRotationService
     {
-        private RestClient _restClient;
         private readonly IKeyVaultService _keyVaultService;
+        private readonly RestClient _restClient;
 
         public TokenRotationService(IKeyVaultService keyVaultService)
         {
             _keyVaultService = keyVaultService;
-        }
 
-        public void Start()
-        {
             _restClient = new RestClient(DevOpsApi.Url);
             _restClient.AddDefaultHeader("Content-Type", "application/json");
             _restClient.AddDefaultHeader("Authorization", $"Bearer {DevOpsApi.Token}");
+        }
 
+        public void ConsumerMessages()
+        {
             var config = new ConsumerConfig
             {
                 BootstrapServers = Kafka.BrokerList,
@@ -85,6 +87,39 @@ namespace AstraDB.Token.Rotation.Consumer
                     {
                         Console.WriteLine($"Error: {e.Message}");
                     }
+                }
+            }
+        }
+
+        public void ExpireTokens()
+        {
+            Console.WriteLine("Attempting to fetch to Key Vault Secrets...");
+            var keyVaultSecrets = _keyVaultService
+                .GetPropertiesOfSecrets();
+            Console.WriteLine("Succeeded fetching Key Vault Secrets.");
+
+            // process just the rotating status with name contains "-AccessToken" since they come in pairs
+            foreach (var secret in keyVaultSecrets
+                .Where(x => string.Compare(x.Tags[KeyVaultTags.Status], KeyVaultStatus.Active) == 0
+                && x.Name.Contains("-AccessToken")))
+            {
+                var theSecret = _keyVaultService.GetSecret(secret.Name);
+                var previousVersion = _keyVaultService.GetPreviousVersion(theSecret);
+
+                // delete old token and expire previous version
+                if (previousVersion != null)
+                {
+                    var previousClientId = previousVersion.Tags[KeyVaultTags.ClientId];
+
+                    Console.WriteLine($"Attempting to revoke old astradb token '{previousClientId}'");
+                    var revokeTokenRequest = new RestRequest($"v2/clientIdSecrets/{previousClientId}");
+                    var astraRevokeTokenResponse = _restClient.Delete(revokeTokenRequest);
+                    Console.WriteLine($"Succeeded revoking old astradb token. '{previousClientId}'");
+
+                    Console.WriteLine($"Attempting expiring old key vault version. ({previousClientId})");
+                    _keyVaultService.ExpirePreviousVersion(previousVersion);
+                    _keyVaultService.ExpirePreviousVersion(previousVersion);
+                    Console.WriteLine($"Succeeded to create new key kault version. ({previousClientId})");
                 }
             }
         }
