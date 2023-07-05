@@ -6,13 +6,6 @@ using RestSharp;
 
 namespace AstraDB.Token.Rotation.Services
 {
-    public interface ITokenRotationService
-    {
-        void ConsumerMessages();
-
-        void ExpireTokens();
-    }
-
     public class TokenRotationService : ITokenRotationService
     {
         private readonly IKeyVaultService _keyVaultService;
@@ -22,25 +15,90 @@ namespace AstraDB.Token.Rotation.Services
         {
             _keyVaultService = keyVaultService;
 
-            _restClient = new RestClient(DevOpsApi.Url);
+            _restClient = new RestClient(DevOpsApiConfig.Url);
             _restClient.AddDefaultHeader("Content-Type", "application/json");
-            _restClient.AddDefaultHeader("Authorization", $"Bearer {DevOpsApi.Token}");
+            _restClient.AddDefaultHeader("Authorization", $"Bearer {DevOpsApiConfig.Token}");
         }
 
-        public void ConsumerMessages()
+        public void ProduceMessages()
+        {
+            var config = new ProducerConfig
+            {
+                BootstrapServers = KafkaConfig.BrokerList,
+                SecurityProtocol = SecurityProtocol.SaslSsl,
+                SaslMechanism = SaslMechanism.Plain,
+                SaslUsername = KafkaConfig.Username,
+                SaslPassword = KafkaConfig.Password
+            };
+
+            using (var producer = new ProducerBuilder<long, string>(config).SetKeySerializer(Serializers.Int64).SetValueSerializer(Serializers.Utf8).Build())
+            {
+                Console.WriteLine("Attempting to fetch to AstraDB Tokens...");
+                var astraTokensResponse = _restClient.ExecuteGet<AstraTokensResponse>(new RestRequest("v2/clientIdSecrets")).Data;
+                Console.WriteLine("Succeeded fetching AstraDB Tokens.");
+
+                // just exit but unlikely
+                if (astraTokensResponse == null) return;
+
+                Console.WriteLine("Attempting to fetch to Key Vault Secrets...");
+                var keyVaultSecrets = _keyVaultService
+                    .GetPropertiesOfSecrets();
+                Console.WriteLine("Succeeded fetching Key Vault Secrets.");
+
+                foreach (var secret in keyVaultSecrets)
+                {
+                    var status = secret.Tags[KeyVaultTags.Status];
+                    var generatedOn = secret.Tags[KeyVaultTags.GeneratedOn];
+
+                    if (string.Compare(status, KeyVaultStatus.Active, true) == 0
+                        && (DateTime.UtcNow - DateTime.Parse(generatedOn)).Minutes >= 3
+                        && secret.Name.Contains("-AccessToken"))
+                    {
+                        var seedClientId = secret.Tags[KeyVaultTags.SeedClientId];
+                        var clientId = secret.Tags[KeyVaultTags.ClientId];
+
+                        Console.WriteLine($"Trying to rotate {seedClientId}-AccessToken and {seedClientId}-ClientSecret");
+
+                        // find matching astradb token
+                        var theAstraDbToken = astraTokensResponse.Clients.FirstOrDefault(x => string.Compare(x.ClientId, clientId, true) == 0);
+
+                        if (theAstraDbToken != null)
+                        {
+                            var key = DateTime.UtcNow.Ticks;
+                            var messagePayload = new EventStreamTokenRotationMessage
+                            {
+                                SeedClientId = seedClientId,
+                                ClientId = clientId,
+                                Roles = theAstraDbToken.Roles
+                            };
+
+                            var messagePayloadJson = JsonConvert.SerializeObject(messagePayload);
+
+                            producer.Produce(KafkaConfig.Topic, new Message<long, string> { Key = key, Value = messagePayloadJson });
+
+                            Console.WriteLine($"Message {key} sent (value: '{messagePayloadJson}')");
+                        }
+                    }
+                }
+
+                producer.Flush();
+            }
+        }
+
+        public void ConsumeMessages()
         {
             var config = new ConsumerConfig
             {
-                BootstrapServers = Kafka.BrokerList,
+                BootstrapServers = KafkaConfig.BrokerList,
                 SecurityProtocol = SecurityProtocol.SaslSsl,
                 SocketTimeoutMs = 60000,
                 SessionTimeoutMs = 30000,
 
                 SaslMechanism = SaslMechanism.Plain,
-                SaslUsername = Kafka.Username,
-                SaslPassword = Kafka.Password,
+                SaslUsername = KafkaConfig.Username,
+                SaslPassword = KafkaConfig.Password,
                 AutoOffsetReset = AutoOffsetReset.Earliest,
-                GroupId = Kafka.ConsumerGroup,
+                GroupId = KafkaConfig.ConsumerGroup,
                 BrokerVersionFallback = "1.0.0",
             };
 
@@ -49,9 +107,9 @@ namespace AstraDB.Token.Rotation.Services
                 CancellationTokenSource cts = new CancellationTokenSource();
                 Console.CancelKeyPress += (_, e) => { e.Cancel = true; cts.Cancel(); };
 
-                consumer.Subscribe(Kafka.Topic);
+                consumer.Subscribe(KafkaConfig.Topic);
 
-                Console.WriteLine("Consuming messages from topic: " + Kafka.Topic + ", broker(s): " + Kafka.BrokerList);
+                Console.WriteLine("Consuming messages from topic: " + KafkaConfig.Topic + ", broker(s): " + KafkaConfig.BrokerList);
 
                 while (true)
                 {

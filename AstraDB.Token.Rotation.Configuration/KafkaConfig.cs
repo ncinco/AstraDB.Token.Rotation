@@ -1,6 +1,6 @@
 ﻿namespace AstraDB.Token.Rotation.Configuration
 {
-    public class Kafka
+    public class KafkaConfig
     {
         public const string ConsumerGroup = "$Default";
 

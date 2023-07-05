@@ -7,7 +7,8 @@ namespace AstraDB.Token.Rotation.Consumer
         static void Main(string[] args)
         {
             var keyVaultService = new KeyVaultService();
-            new TokenRotationService(keyVaultService).ConsumerMessages();
+            var TokenRotationService = new TokenRotationService(keyVaultService);
+            TokenRotationService.ConsumeMessages();
         }
     }
 }

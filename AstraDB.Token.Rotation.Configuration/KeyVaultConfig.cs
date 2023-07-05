@@ -1,6 +1,6 @@
 ﻿namespace AstraDB.Token.Rotation.Configuration
 {
-    public class KeyVault
+    public class KeyVaultConfig
     {
         public const string KeyVaultUrl = "https://kv-astradb-astra.vault.azure.net/";
         public const string TenantId = "a5e8ce79-b0ec-41a2-a51c-aee927f1d808";

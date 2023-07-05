@@ -4,29 +4,14 @@ using Azure.Security.KeyVault.Secrets;
 
 namespace AstraDB.Token.Rotation.Services
 {
-    public interface IKeyVaultService
-    {
-        void NewVersion(string secretName, string secretStatus, string clientId, string generatedOn, string value);
-
-        void SetPerviousVersionToRotating(string secretName);
-
-        KeyVaultSecret GetSecret(string secretName);
-
-        List<SecretProperties> GetPropertiesOfSecrets();
-
-        SecretProperties GetPreviousVersion(KeyVaultSecret secret);
-
-        bool ExpirePreviousVersion(SecretProperties previousVersion);
-    }
-
     public class KeyVaultService : IKeyVaultService
     {
         private readonly SecretClient _keyVaultSecretClient;
 
         public KeyVaultService()
         {
-            var _credential = new ClientSecretCredential(KeyVault.TenantId, KeyVault.ClientId, KeyVault.ClientSecret);
-            _keyVaultSecretClient = new SecretClient(new Uri(KeyVault.KeyVaultUrl), _credential);
+            var _credential = new ClientSecretCredential(KeyVaultConfig.TenantId, KeyVaultConfig.ClientId, KeyVaultConfig.ClientSecret);
+            _keyVaultSecretClient = new SecretClient(new Uri(KeyVaultConfig.KeyVaultUrl), _credential);
         }
 
         public void NewVersion(string secretName, string secretStatus, string clientId, string generatedOn, string value)
