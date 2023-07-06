@@ -16,7 +16,7 @@ RUN dotnet build "AstraDB.Token.Rotation.Consumer.csproj" -c Release -o /app/bui
 
 FROM build AS publish
 RUN dotnet publish "AstraDB.Token.Rotation.Consumer.csproj" -c Release -o /app/publish /p:UseAppHost=false
-dot
+
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
