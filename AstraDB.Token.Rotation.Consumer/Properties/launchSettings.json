@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "AstraDB.Token.Rotation.Consumer": {
+      "commandName": "Project"
+    },
+    "Docker": {
+      "commandName": "Docker"
+    }
+  }
+}
