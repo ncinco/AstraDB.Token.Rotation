@@ -171,7 +171,7 @@ namespace AstraDB.Token.Rotation.Services
 
                     Console.WriteLine($"Attempting to revoke old astradb token '{previousClientId}'");
                     var revokeTokenRequest = new RestRequest($"v2/clientIdSecrets/{previousClientId}");
-                    var astraRevokeTokenResponse = _restClient.Delete(revokeTokenRequest);
+                    var astraRevokeTokenResponse = await _restClient.DeleteAsync(revokeTokenRequest);
                     Console.WriteLine($"Succeeded revoking old astradb token. '{previousClientId}'");
 
                     Console.WriteLine($"Attempting expiring old key vault version. ({previousClientId})");

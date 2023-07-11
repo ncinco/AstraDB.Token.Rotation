@@ -5,12 +5,17 @@ namespace AstraDB.Token.Rotation.Producer
 {
     public class TokenRotationJob : IJob
     {
+        private readonly ITokenRotationService _tokenRotationService;
+
+        public TokenRotationJob(ITokenRotationService tokenRotationService)
+        {
+            _tokenRotationService = tokenRotationService;
+        }
+
         public async Task Execute(IJobExecutionContext context)
         {
-            var keyVaultService = new KeyVaultService();
-            var TokenRotationService = new TokenRotationService(keyVaultService);
-            await TokenRotationService.ProduceMessagesAsync();
-            await TokenRotationService.ExpireTokensAsync();
+            await _tokenRotationService.ProduceMessagesAsync();
+            await _tokenRotationService.ExpireTokensAsync();
         }
     }
 }
