@@ -2,10 +2,10 @@
 {
     public interface ITokenRotationService
     {
-        void ProduceMessages();
+        Task ProduceMessagesAsync();
 
-        void ConsumeMessages();
+        Task ConsumeMessagesAsync();
 
-        void ExpireTokens();
+        Task ExpireTokensAsync();
     }
 }

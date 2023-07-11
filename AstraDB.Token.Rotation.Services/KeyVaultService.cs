@@ -14,9 +14,9 @@ namespace AstraDB.Token.Rotation.Services
             _keyVaultSecretClient = new SecretClient(new Uri(KeyVaultConfig.KeyVaultUrl), _credential);
         }
 
-        public void NewVersion(string secretName, string secretStatus, string clientId, string generatedOn, string value)
+        public async Task NewVersionAsync(string secretName, string secretStatus, string clientId, string generatedOn, string value)
         {
-            var theSecret = _keyVaultSecretClient.GetSecret(secretName).Value;
+            var theSecret = await GetSecretAsync(secretName);
 
             if (theSecret == null)
             {
@@ -29,9 +29,9 @@ namespace AstraDB.Token.Rotation.Services
 
             Console.WriteLine($"Creating new secret version: {theSecret.Name}");
             // update the secret, this will create new version WITHOUT the tags
-            _keyVaultSecretClient.SetSecret(secretName, value);
+            await _keyVaultSecretClient.SetSecretAsync(secretName, value);
             // get the latest version
-            theSecret = _keyVaultSecretClient.GetSecret(secretName);
+            theSecret = await GetSecretAsync(secretName);
 
             Console.WriteLine($"Updating secret tags: {theSecret.Name}");
             tags[KeyVaultTags.ClientId] = clientId;
@@ -48,12 +48,12 @@ namespace AstraDB.Token.Rotation.Services
                 theSecret.Properties.Tags.Add(tag);
             }
 
-            _keyVaultSecretClient.UpdateSecretProperties(theSecret.Properties);
+            await _keyVaultSecretClient.UpdateSecretPropertiesAsync(theSecret.Properties);
         }
 
-        public void SetPerviousVersionToRotating(string secretName)
+        public async Task SetPerviousVersionToRotatingAsync(string secretName)
         {
-            var theCurrentSecret = _keyVaultSecretClient.GetSecret(secretName).Value;
+            var theCurrentSecret = await GetSecretAsync(secretName);
 
             var previousVersion = GetPreviousVersion(theCurrentSecret);
 
@@ -66,13 +66,13 @@ namespace AstraDB.Token.Rotation.Services
             // update status tag
             Console.WriteLine($"Updating secret tags: {previousVersion.Name}");
             previousVersion.Tags[KeyVaultTags.Status] = KeyVaultStatus.Rotating;
-            _keyVaultSecretClient.UpdateSecretProperties(previousVersion);
+            await _keyVaultSecretClient.UpdateSecretPropertiesAsync(previousVersion);
         }
 
-        public KeyVaultSecret GetSecret(string secretName)
+        public async Task<KeyVaultSecret> GetSecretAsync(string secretName)
         {
-            return _keyVaultSecretClient
-                .GetSecret(secretName);
+            return await _keyVaultSecretClient
+                .GetSecretAsync(secretName);
         }
 
         public List<SecretProperties> GetPropertiesOfSecrets()
@@ -98,7 +98,7 @@ namespace AstraDB.Token.Rotation.Services
             return previousVersion;
         }
 
-        public bool ExpirePreviousVersion(SecretProperties previousVersion)
+        public async Task<bool> ExpirePreviousVersionAsyc(SecretProperties previousVersion)
         {
             if (previousVersion == null)
             {
@@ -111,7 +111,7 @@ namespace AstraDB.Token.Rotation.Services
             previousVersion.ExpiresOn = DateTime.UtcNow;
             previousVersion.Tags[KeyVaultTags.Status] = KeyVaultStatus.Rotated;
 
-            _keyVaultSecretClient.UpdateSecretProperties(previousVersion);
+            await _keyVaultSecretClient.UpdateSecretPropertiesAsync(previousVersion);
 
             return true;
         }

@@ -6,6 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <StartupObject>AstraDB.Token.Rotation.Consumer.Program</StartupObject>
   </PropertyGroup>
 
   <ItemGroup>

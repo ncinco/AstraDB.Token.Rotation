@@ -2,13 +2,13 @@
 
 namespace AstraDB.Token.Rotation.Consumer
 {
-    internal class Program
+    public class Program
     {
-        static void Main(string[] args)
+        public async static Task Main(string[] args)
         {
             var keyVaultService = new KeyVaultService();
             var TokenRotationService = new TokenRotationService(keyVaultService);
-            TokenRotationService.ConsumeMessages();
+            await TokenRotationService.ConsumeMessagesAsync();
         }
     }
 }

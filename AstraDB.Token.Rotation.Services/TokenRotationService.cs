@@ -20,7 +20,7 @@ namespace AstraDB.Token.Rotation.Services
             _restClient.AddDefaultHeader("Authorization", $"Bearer {DevOpsApiConfig.Token}");
         }
 
-        public void ProduceMessages()
+        public async Task ProduceMessagesAsync()
         {
             var config = new ProducerConfig
             {
@@ -34,7 +34,7 @@ namespace AstraDB.Token.Rotation.Services
             using (var producer = new ProducerBuilder<long, string>(config).SetKeySerializer(Serializers.Int64).SetValueSerializer(Serializers.Utf8).Build())
             {
                 Console.WriteLine("Attempting to fetch to AstraDB Tokens...");
-                var astraTokensResponse = _restClient.ExecuteGet<AstraTokensResponse>(new RestRequest("v2/clientIdSecrets")).Data;
+                var astraTokensResponse = await _restClient.ExecuteGetAsync<AstraTokensResponse>(new RestRequest("v2/clientIdSecrets"));
                 Console.WriteLine("Succeeded fetching AstraDB Tokens.");
 
                 // just exit but unlikely
@@ -60,7 +60,7 @@ namespace AstraDB.Token.Rotation.Services
                         Console.WriteLine($"Trying to rotate {seedClientId}-AccessToken and {seedClientId}-ClientSecret");
 
                         // find matching astradb token
-                        var theAstraDbToken = astraTokensResponse.Clients.FirstOrDefault(x => string.Compare(x.ClientId, clientId, true) == 0);
+                        var theAstraDbToken = astraTokensResponse.Data.Clients.FirstOrDefault(x => string.Compare(x.ClientId, clientId, true) == 0);
 
                         if (theAstraDbToken != null)
                         {
@@ -74,7 +74,7 @@ namespace AstraDB.Token.Rotation.Services
 
                             var messagePayloadJson = JsonConvert.SerializeObject(messagePayload);
 
-                            producer.Produce(KafkaConfig.Topic, new Message<long, string> { Key = key, Value = messagePayloadJson });
+                            await producer.ProduceAsync(KafkaConfig.Topic, new Message<long, string> { Key = key, Value = messagePayloadJson });
 
                             Console.WriteLine($"Message {key} sent (value: '{messagePayloadJson}')");
                         }
@@ -85,7 +85,7 @@ namespace AstraDB.Token.Rotation.Services
             }
         }
 
-        public void ConsumeMessages()
+        public async Task ConsumeMessagesAsync()
         {
             var config = new ConsumerConfig
             {
@@ -123,18 +123,18 @@ namespace AstraDB.Token.Rotation.Services
                         var createTokenRequest = new RestRequest("v2/clientIdSecrets");
                         var jsonPayload = @"{""roles"": " + JsonConvert.SerializeObject(message.Roles) + "}";
                         createTokenRequest.AddBody(jsonPayload, contentType: "application/json");
-                        var response = _restClient.Post(createTokenRequest);
+                        var response = await _restClient.PostAsync(createTokenRequest);
                         var astraNewTokenResponse = JsonConvert.DeserializeObject<AstraNewTokenResponse>(response.Content);
                         Console.WriteLine($"Succeeded creating new astradb token. {JsonConvert.SerializeObject(astraNewTokenResponse.ClientId)}");
 
                         Console.WriteLine("Attempting to create new key vault version with new astradb token...");
-                        _keyVaultService.NewVersion($"{message.SeedClientId}-AccessToken", KeyVaultStatus.Active, astraNewTokenResponse.ClientId, astraNewTokenResponse.GeneratedOn, astraNewTokenResponse.Token);
-                        _keyVaultService.NewVersion($"{message.SeedClientId}-ClientSecret", KeyVaultStatus.Active, astraNewTokenResponse.ClientId, astraNewTokenResponse.GeneratedOn, astraNewTokenResponse.Secret);
+                        await _keyVaultService.NewVersionAsync($"{message.SeedClientId}-AccessToken", KeyVaultStatus.Active, astraNewTokenResponse.ClientId, astraNewTokenResponse.GeneratedOn, astraNewTokenResponse.Token);
+                        await _keyVaultService.NewVersionAsync($"{message.SeedClientId}-ClientSecret", KeyVaultStatus.Active, astraNewTokenResponse.ClientId, astraNewTokenResponse.GeneratedOn, astraNewTokenResponse.Secret);
                         Console.WriteLine("Succeeded creating new key vault version...");
 
                         Console.WriteLine("Attempting to set previous key vault version to rotating status...");
-                        _keyVaultService.SetPerviousVersionToRotating($"{message.SeedClientId}-AccessToken");
-                        _keyVaultService.SetPerviousVersionToRotating($"{message.SeedClientId}-ClientSecret");
+                        await _keyVaultService.SetPerviousVersionToRotatingAsync($"{message.SeedClientId}-AccessToken");
+                        await _keyVaultService.SetPerviousVersionToRotatingAsync($"{message.SeedClientId}-ClientSecret");
                         Console.WriteLine("Succeeded setting previous key vault version to rotating status...");
                     }
                     catch (ConsumeException e)
@@ -149,7 +149,7 @@ namespace AstraDB.Token.Rotation.Services
             }
         }
 
-        public void ExpireTokens()
+        public async Task ExpireTokensAsync()
         {
             Console.WriteLine("Attempting to fetch to Key Vault Secrets...");
             var keyVaultSecrets = _keyVaultService
@@ -161,7 +161,7 @@ namespace AstraDB.Token.Rotation.Services
                 .Where(x => string.Compare(x.Tags[KeyVaultTags.Status], KeyVaultStatus.Active) == 0
                 && x.Name.Contains("-AccessToken")))
             {
-                var theSecret = _keyVaultService.GetSecret(secret.Name);
+                var theSecret = await _keyVaultService.GetSecretAsync(secret.Name);
                 var previousVersion = _keyVaultService.GetPreviousVersion(theSecret);
 
                 // delete old token and expire previous version
@@ -175,8 +175,8 @@ namespace AstraDB.Token.Rotation.Services
                     Console.WriteLine($"Succeeded revoking old astradb token. '{previousClientId}'");
 
                     Console.WriteLine($"Attempting expiring old key vault version. ({previousClientId})");
-                    _keyVaultService.ExpirePreviousVersion(previousVersion);
-                    _keyVaultService.ExpirePreviousVersion(previousVersion);
+                    await _keyVaultService.ExpirePreviousVersionAsyc(previousVersion);
+                    await _keyVaultService.ExpirePreviousVersionAsyc(previousVersion);
                     Console.WriteLine($"Succeeded to create new key kault version. ({previousClientId})");
                 }
             }
