@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2023-07-13T01:36:30.838Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36" etag="134jQeZY8aWaqHlyur1J" version="21.4.0" type="github">
+<mxfile host="app.diagrams.net" modified="2023-07-13T01:37:48.572Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36" etag="-sXGfZlC_sDoT-Xck-Yx" version="21.4.0" type="github">
   <diagram name="Page-1" id="pmoyyD1UTvwdsH77ybAz">
     <mxGraphModel dx="1901" dy="1753" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
@@ -86,6 +86,18 @@
             <mxPoint x="210" y="680" as="sourcePoint" />
             <mxPoint x="290" y="680" as="targetPoint" />
           </mxGeometry>
+        </mxCell>
+        <mxCell id="hNq2I7qgFD3l3yb3QR5O-31" value="Consumer" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;edgeStyle&quot;:&quot;elbowEdgeStyle&quot;,&quot;elbow&quot;:&quot;vertical&quot;,&quot;curved&quot;:0,&quot;rounded&quot;:0};" vertex="1" parent="1">
+          <mxGeometry x="120" y="780" width="100" height="270" as="geometry" />
+        </mxCell>
+        <mxCell id="hNq2I7qgFD3l3yb3QR5O-32" value="Kafka" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;edgeStyle&quot;:&quot;elbowEdgeStyle&quot;,&quot;elbow&quot;:&quot;vertical&quot;,&quot;curved&quot;:0,&quot;rounded&quot;:0};" vertex="1" parent="1">
+          <mxGeometry x="269" y="780" width="100" height="270" as="geometry" />
+        </mxCell>
+        <mxCell id="hNq2I7qgFD3l3yb3QR5O-34" value="AstraDB" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;edgeStyle&quot;:&quot;elbowEdgeStyle&quot;,&quot;elbow&quot;:&quot;vertical&quot;,&quot;curved&quot;:0,&quot;rounded&quot;:0};" vertex="1" parent="1">
+          <mxGeometry x="430" y="780" width="100" height="270" as="geometry" />
+        </mxCell>
+        <mxCell id="hNq2I7qgFD3l3yb3QR5O-36" value="Key Vault" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;edgeStyle&quot;:&quot;elbowEdgeStyle&quot;,&quot;elbow&quot;:&quot;vertical&quot;,&quot;curved&quot;:0,&quot;rounded&quot;:0};" vertex="1" parent="1">
+          <mxGeometry x="590.5" y="780" width="100" height="270" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
