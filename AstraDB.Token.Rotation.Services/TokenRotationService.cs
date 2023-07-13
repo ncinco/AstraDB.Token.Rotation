@@ -31,7 +31,7 @@ namespace AstraDB.Token.Rotation.Services
                 SaslPassword = KafkaConfig.Password
             };
 
-            using (var producer = new ProducerBuilder<long, string>(config).SetKeySerializer(Serializers.Int64).SetValueSerializer(Serializers.Utf8).Build())
+            using (var producer = new ProducerBuilder<string, string>(config).SetKeySerializer(Serializers.Int64).SetValueSerializer(Serializers.Utf8).Build())
             {
                 Console.WriteLine("Attempting to fetch to AstraDB Tokens...");
                 var astraTokensResponse = await _restClient.ExecuteGetAsync<AstraTokensResponse>(new RestRequest("v2/clientIdSecrets"));
@@ -64,7 +64,7 @@ namespace AstraDB.Token.Rotation.Services
 
                         if (theAstraDbToken != null)
                         {
-                            var key = DateTime.UtcNow.Ticks;
+                            var key = clientId;
                             var messagePayload = new EventStreamTokenRotationMessage
                             {
                                 SeedClientId = seedClientId,
@@ -74,7 +74,7 @@ namespace AstraDB.Token.Rotation.Services
 
                             var messagePayloadJson = JsonConvert.SerializeObject(messagePayload);
 
-                            await producer.ProduceAsync(KafkaConfig.Topic, new Message<long, string> { Key = key, Value = messagePayloadJson });
+                            await producer.ProduceAsync(KafkaConfig.Topic, new Message<string, string> { Key = key, Value = messagePayloadJson });
 
                             Console.WriteLine($"Message {key} sent (value: '{messagePayloadJson}')");
                         }
@@ -102,7 +102,7 @@ namespace AstraDB.Token.Rotation.Services
                 BrokerVersionFallback = "1.0.0",
             };
 
-            using (var consumer = new ConsumerBuilder<long, string>(config).SetKeyDeserializer(Deserializers.Int64).SetValueDeserializer(Deserializers.Utf8).Build())
+            using (var consumer = new ConsumerBuilder<string, string>(config).SetKeyDeserializer(Deserializers.Utf8).SetValueDeserializer(Deserializers.Utf8).Build())
             {
                 CancellationTokenSource cts = new CancellationTokenSource();
                 Console.CancelKeyPress += (_, e) => { e.Cancel = true; cts.Cancel(); };
