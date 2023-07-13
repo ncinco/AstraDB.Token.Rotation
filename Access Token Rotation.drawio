@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2023-07-13T01:36:04.336Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36" etag="h0lWnGUr7gCSl7cqfFhe" version="21.4.0" type="github">
+<mxfile host="app.diagrams.net" modified="2023-07-13T01:36:30.838Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36" etag="134jQeZY8aWaqHlyur1J" version="21.4.0" type="github">
   <diagram name="Page-1" id="pmoyyD1UTvwdsH77ybAz">
     <mxGraphModel dx="1901" dy="1753" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
@@ -81,13 +81,10 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="hNq2I7qgFD3l3yb3QR5O-29" value="create event message" style="html=1;verticalAlign=bottom;startArrow=oval;endArrow=block;startSize=8;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;" edge="1" target="hNq2I7qgFD3l3yb3QR5O-28" parent="1" source="hNq2I7qgFD3l3yb3QR5O-14">
-          <mxGeometry relative="1" as="geometry">
-            <mxPoint x="576" y="670" as="sourcePoint" />
-            <Array as="points">
-              <mxPoint x="560" y="690" />
-              <mxPoint x="370" y="680" />
-            </Array>
+        <mxCell id="hNq2I7qgFD3l3yb3QR5O-30" value="produce message" style="html=1;verticalAlign=bottom;endArrow=block;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;" edge="1" parent="1" source="hNq2I7qgFD3l3yb3QR5O-14" target="hNq2I7qgFD3l3yb3QR5O-28">
+          <mxGeometry width="80" relative="1" as="geometry">
+            <mxPoint x="210" y="680" as="sourcePoint" />
+            <mxPoint x="290" y="680" as="targetPoint" />
           </mxGeometry>
         </mxCell>
       </root>
