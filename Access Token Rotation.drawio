@@ -1,9 +1,21 @@
-<mxfile host="app.diagrams.net" modified="2023-07-12T23:43:01.917Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36" etag="CR52teb0lmAH4giNzSMr" version="21.4.0" type="github">
+<mxfile host="app.diagrams.net" modified="2023-07-13T00:08:17.610Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36" etag="ghu3YDL9fm4--dZDTp--" version="21.4.0" type="github">
   <diagram name="Page-1" id="pmoyyD1UTvwdsH77ybAz">
-    <mxGraphModel dx="2074" dy="653" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+    <mxGraphModel dx="2924" dy="653" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
+        <mxCell id="hNq2I7qgFD3l3yb3QR5O-1" value="Kafka" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;gradientColor=#945DF2;gradientDirection=north;fillColor=#5A30B5;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.managed_streaming_for_kafka;" vertex="1" parent="1">
+          <mxGeometry x="360" y="180" width="78" height="78" as="geometry" />
+        </mxCell>
+        <mxCell id="hNq2I7qgFD3l3yb3QR5O-2" value="" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/security/Key_Vaults.svg;" vertex="1" parent="1">
+          <mxGeometry x="-210" y="140" width="68" height="68" as="geometry" />
+        </mxCell>
+        <mxCell id="hNq2I7qgFD3l3yb3QR5O-4" value="Consumer" style="outlineConnect=0;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;shape=mxgraph.aws3.apps;fillColor=#759C3E;gradientColor=none;" vertex="1" parent="1">
+          <mxGeometry x="600" y="178.5" width="81" height="79.5" as="geometry" />
+        </mxCell>
+        <mxCell id="hNq2I7qgFD3l3yb3QR5O-5" value="Producer" style="outlineConnect=0;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;shape=mxgraph.aws3.apps;fillColor=#759C3E;gradientColor=none;" vertex="1" parent="1">
+          <mxGeometry x="120" y="180" width="81" height="79.5" as="geometry" />
+        </mxCell>
       </root>
     </mxGraphModel>
   </diagram>
