@@ -1,9 +1,12 @@
-<mxfile host="app.diagrams.net" modified="2023-07-13T00:10:42.445Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36" etag="awSes3sSeB0Uo1k3IIDZ" version="21.4.0" type="github">
+<mxfile host="app.diagrams.net" modified="2023-07-13T00:11:07.605Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36" etag="sC9jSaEWsixqPfrCiJ9u" version="21.4.0" type="github">
   <diagram name="Page-1" id="pmoyyD1UTvwdsH77ybAz">
     <mxGraphModel dx="2074" dy="1753" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
+        <mxCell id="hNq2I7qgFD3l3yb3QR5O-10" value="" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="220" y="-100" width="380" height="160" as="geometry" />
+        </mxCell>
         <mxCell id="hNq2I7qgFD3l3yb3QR5O-1" value="Kafka" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;gradientColor=#945DF2;gradientDirection=north;fillColor=#5A30B5;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.managed_streaming_for_kafka;" vertex="1" parent="1">
           <mxGeometry x="360" y="180" width="78" height="78" as="geometry" />
         </mxCell>
@@ -18,18 +21,6 @@
         </mxCell>
         <mxCell id="hNq2I7qgFD3l3yb3QR5O-6" value="AstraDB" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;gradientColor=#4D72F3;gradientDirection=north;fillColor=#3334B9;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.managed_apache_cassandra_service;" vertex="1" parent="1">
           <mxGeometry x="280" y="-70" width="78" height="78" as="geometry" />
-        </mxCell>
-        <mxCell id="hNq2I7qgFD3l3yb3QR5O-8" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;exitPerimeter=0;" edge="1" parent="1" source="hNq2I7qgFD3l3yb3QR5O-5" target="hNq2I7qgFD3l3yb3QR5O-6">
-          <mxGeometry width="50" height="50" relative="1" as="geometry">
-            <mxPoint x="190" y="120" as="sourcePoint" />
-            <mxPoint x="240" y="70" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="hNq2I7qgFD3l3yb3QR5O-9" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;entryX=-0.044;entryY=0.544;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" target="hNq2I7qgFD3l3yb3QR5O-2">
-          <mxGeometry width="50" height="50" relative="1" as="geometry">
-            <mxPoint x="160" y="180" as="sourcePoint" />
-            <mxPoint x="320" y="80" as="targetPoint" />
-          </mxGeometry>
         </mxCell>
       </root>
     </mxGraphModel>
