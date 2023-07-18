@@ -51,7 +51,7 @@ namespace AstraDB.Token.Rotation.Services
                     var generatedOn = secret.Tags[KeyVaultTags.GeneratedOn];
 
                     if (string.Compare(status, KeyVaultStatus.Active, true) == 0
-                        && (DateTime.UtcNow - DateTime.Parse(generatedOn)).Minutes >= 3
+                        && (DateTime.UtcNow - DateTime.Parse(generatedOn).ToUniversalTime()).Minutes >= 3
                         && secret.Name.Contains("-AccessToken"))
                     {
                         var seedClientId = secret.Tags[KeyVaultTags.SeedClientId];

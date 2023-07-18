@@ -129,12 +129,16 @@ namespace AstraDB.Token.Rotation.Services
 
             await foreach (Page<SecretProperties> page in pagedVersions.AsPages())
             {
+                // for some reason when a version is disabled, tags are cleared.
+                // do we move the tag status check here
+
                 // don't expire current version
                 // only version with rotating status to be expired
                 // and enabled
                 var versions = page.Values
-                    .Where(x => x.Tags[KeyVaultTags.Status] == KeyVaultStatus.Rotating
-                        && x.Enabled.Value
+                    .Where(x => x.Enabled.Value
+                        && x.Tags.ContainsKey(KeyVaultTags.Status)
+                        && x.Tags[KeyVaultTags.Status] == KeyVaultStatus.Rotating
                         && x.Version != theSecret.Value.Properties.Version);
 
                 foreach (var version in versions)
@@ -146,9 +150,6 @@ namespace AstraDB.Token.Rotation.Services
 
                     await _keyVaultSecretClient.UpdateSecretPropertiesAsync(version);
                 }
-
-                // The continuation token that can be used in AsPages call to resume enumeration
-                Console.WriteLine(page.ContinuationToken);
             }
 
             return true;
