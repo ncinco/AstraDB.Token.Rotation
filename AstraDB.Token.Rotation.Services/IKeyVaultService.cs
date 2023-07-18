@@ -1,4 +1,5 @@
-﻿using Azure.Security.KeyVault.Secrets;
+﻿using AstraDB.Token.Rotation.Configuration;
+using Azure.Security.KeyVault.Secrets;
 
 namespace AstraDB.Token.Rotation.Services
 {
@@ -12,8 +13,8 @@ namespace AstraDB.Token.Rotation.Services
 
         List<SecretProperties> GetPropertiesOfSecrets();
 
-        SecretProperties GetPreviousVersion(KeyVaultSecret secret);
+        SecretProperties GetPreviousVersion(KeyVaultSecret secret, string keyVaultStatus);
 
-        Task<bool> ExpirePreviousVersionAsyc(SecretProperties previousVersion);
+        Task<bool> ExpirePreviousVersionsAsyc(string secretName);
     }
 }

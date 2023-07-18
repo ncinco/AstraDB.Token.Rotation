@@ -1,6 +1,7 @@
 ﻿using AstraDB.Token.Rotation.Configuration;
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
+using System.Linq;
 
 namespace AstraDB.Token.Rotation.Services
 {
@@ -55,7 +56,7 @@ namespace AstraDB.Token.Rotation.Services
         {
             var theCurrentSecret = await GetSecretAsync(secretName);
 
-            var previousVersion = GetPreviousVersion(theCurrentSecret);
+            var previousVersion = GetPreviousVersion(theCurrentSecret, KeyVaultStatus.Active);
 
             if (previousVersion == null)
             {
@@ -82,13 +83,13 @@ namespace AstraDB.Token.Rotation.Services
                 .ToList();
         }
 
-        public SecretProperties GetPreviousVersion(KeyVaultSecret secret)
+        public SecretProperties GetPreviousVersion(KeyVaultSecret secret, string keyVaultStatus)
         {
             var previousVersion = _keyVaultSecretClient
                 .GetPropertiesOfSecretVersions(secret.Name)
                 .OrderByDescending(x => x.CreatedOn)
                 .FirstOrDefault(x => x.Version != secret.Properties.Version
-                    && x.Tags[KeyVaultTags.Status] == KeyVaultStatus.Rotating);
+                    && x.Tags[KeyVaultTags.Status] == keyVaultStatus);
 
             if (previousVersion == null)
             {
@@ -98,20 +99,50 @@ namespace AstraDB.Token.Rotation.Services
             return previousVersion;
         }
 
-        public async Task<bool> ExpirePreviousVersionAsyc(SecretProperties previousVersion)
+        public async Task<bool> ExpirePreviousVersionsAsyc(KeyVaultSecret theSecret)
         {
-            if (previousVersion == null)
+            var versions = _keyVaultSecretClient
+                .GetPropertiesOfSecretVersions(theSecret.Name)
+                .Where(x => x.Version != theSecret.Properties.Version && x.Enabled.Value)
+                .ToList();
+
+
+            foreach(var version in versions)
             {
-                // no other version, first one
-                return false;
+                // disable, expire and status to rotated
+                version.Enabled = false;
+                version.ExpiresOn = DateTime.UtcNow;
+                version.Tags[KeyVaultTags.Status] = KeyVaultStatus.Rotated;
+
+                await _keyVaultSecretClient.UpdateSecretPropertiesAsync(version);
             }
 
-            // disable, expire and status to rotated
-            previousVersion.Enabled = false;
-            previousVersion.ExpiresOn = DateTime.UtcNow;
-            previousVersion.Tags[KeyVaultTags.Status] = KeyVaultStatus.Rotated;
+            return true;
+        }
 
-            await _keyVaultSecretClient.UpdateSecretPropertiesAsync(previousVersion);
+        public async Task<bool> ExpirePreviousVersionsAsyc(string secretName)
+        {
+            var theSecret = _keyVaultSecretClient.GetSecret(secretName);
+            var versions = _keyVaultSecretClient
+                .GetPropertiesOfSecretVersions(secretName)
+                .Where(x => x.Version != theSecret.Value.Properties.Version
+                    && x.Tags[KeyVaultTags.Status] == KeyVaultStatus.Rotating);
+
+            foreach (var version in versions)
+            {
+                // don't expire current version
+                // rotated active token
+                if (version.Version == theSecret.Value.Properties.Version
+                    && version.Tags[KeyVaultTags.Status] == KeyVaultStatus.Active)
+                    continue;
+
+                // disable, expire and status to rotated
+                version.Enabled = false;
+                version.ExpiresOn = DateTime.UtcNow;
+                version.Tags[KeyVaultTags.Status] = KeyVaultStatus.Rotated;
+
+                await _keyVaultSecretClient.UpdateSecretPropertiesAsync(version);
+            }
 
             return true;
         }

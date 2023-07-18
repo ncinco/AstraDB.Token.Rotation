@@ -51,7 +51,7 @@ namespace AstraDB.Token.Rotation.Services
                     var generatedOn = secret.Tags[KeyVaultTags.GeneratedOn];
 
                     if (string.Compare(status, KeyVaultStatus.Active, true) == 0
-                        && (DateTime.UtcNow - DateTime.Parse(generatedOn)).Minutes >= 3
+                        //&& (DateTime.UtcNow - DateTime.Parse(generatedOn)).Minutes >= 3
                         && secret.Name.Contains("-AccessToken"))
                     {
                         var seedClientId = secret.Tags[KeyVaultTags.SeedClientId];
@@ -162,11 +162,12 @@ namespace AstraDB.Token.Rotation.Services
                 && x.Name.Contains("-AccessToken")))
             {
                 var theSecret = await _keyVaultService.GetSecretAsync(secret.Name);
-                var previousVersion = _keyVaultService.GetPreviousVersion(theSecret);
+                var previousVersion = _keyVaultService.GetPreviousVersion(theSecret, KeyVaultStatus.Rotating);
 
                 // delete old token and expire previous version
                 if (previousVersion != null)
                 {
+                    var seedClientId = theSecret.Properties.Tags[KeyVaultTags.SeedClientId];
                     var previousClientId = previousVersion.Tags[KeyVaultTags.ClientId];
 
                     Console.WriteLine($"Attempting to revoke old astradb token '{previousClientId}'");
@@ -175,8 +176,8 @@ namespace AstraDB.Token.Rotation.Services
                     Console.WriteLine($"Succeeded revoking old astradb token. '{previousClientId}'");
 
                     Console.WriteLine($"Attempting expiring old key vault version. ({previousClientId})");
-                    await _keyVaultService.ExpirePreviousVersionAsyc(previousVersion);
-                    await _keyVaultService.ExpirePreviousVersionAsyc(previousVersion);
+                    await _keyVaultService.ExpirePreviousVersionsAsyc($"{seedClientId}-AccessToken");
+                    await _keyVaultService.ExpirePreviousVersionsAsyc($"{seedClientId}-ClientSecret");
                     Console.WriteLine($"Succeeded to create new key kault version. ({previousClientId})");
                 }
             }
