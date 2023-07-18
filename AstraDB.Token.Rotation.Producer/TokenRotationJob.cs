@@ -14,7 +14,7 @@ namespace AstraDB.Token.Rotation.Producer
 
         public async Task Execute(IJobExecutionContext context)
         {
-            //await _tokenRotationService.ProduceMessagesAsync();
+            await _tokenRotationService.ProduceMessagesAsync();
             await _tokenRotationService.ExpireTokensAsync();
         }
     }
