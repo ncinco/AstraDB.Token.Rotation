@@ -1,6 +1,8 @@
 ﻿using AstraDB.Token.Rotation.Configuration;
+using Azure;
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
+using System;
 using System.Linq;
 
 namespace AstraDB.Token.Rotation.Services
@@ -123,25 +125,30 @@ namespace AstraDB.Token.Rotation.Services
         public async Task<bool> ExpirePreviousVersionsAsyc(string secretName)
         {
             var theSecret = _keyVaultSecretClient.GetSecret(secretName);
-            var versions = _keyVaultSecretClient
-                .GetPropertiesOfSecretVersions(secretName)
-                .Where(x => x.Version != theSecret.Value.Properties.Version
-                    && x.Tags[KeyVaultTags.Status] == KeyVaultStatus.Rotating);
+            var pagedVersions = _keyVaultSecretClient.GetPropertiesOfSecretVersionsAsync(secretName);
 
-            foreach (var version in versions)
+            await foreach (Page<SecretProperties> page in pagedVersions.AsPages())
             {
                 // don't expire current version
-                // rotated active token
-                if (version.Version == theSecret.Value.Properties.Version
-                    && version.Tags[KeyVaultTags.Status] == KeyVaultStatus.Active)
-                    continue;
+                // only version with rotating status to be expired
+                // and enabled
+                var versions = page.Values
+                    .Where(x => x.Tags[KeyVaultTags.Status] == KeyVaultStatus.Rotating
+                        && !x.Enabled.Value
+                        && x.Version != theSecret.Value.Properties.Version);
 
-                // disable, expire and status to rotated
-                version.Enabled = false;
-                version.ExpiresOn = DateTime.UtcNow;
-                version.Tags[KeyVaultTags.Status] = KeyVaultStatus.Rotated;
+                foreach (var version in versions)
+                {
+                    // disable, expire and rotated
+                    version.Enabled = false;
+                    version.ExpiresOn = DateTime.UtcNow;
+                    version.Tags[KeyVaultTags.Status] = KeyVaultStatus.Rotated;
 
-                await _keyVaultSecretClient.UpdateSecretPropertiesAsync(version);
+                    await _keyVaultSecretClient.UpdateSecretPropertiesAsync(version);
+                }
+
+                // The continuation token that can be used in AsPages call to resume enumeration
+                Console.WriteLine(page.ContinuationToken);
             }
 
             return true;
