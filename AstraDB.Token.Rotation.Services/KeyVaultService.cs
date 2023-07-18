@@ -134,7 +134,7 @@ namespace AstraDB.Token.Rotation.Services
                 // and enabled
                 var versions = page.Values
                     .Where(x => x.Tags[KeyVaultTags.Status] == KeyVaultStatus.Rotating
-                        && !x.Enabled.Value
+                        && x.Enabled.Value
                         && x.Version != theSecret.Value.Properties.Version);
 
                 foreach (var version in versions)
