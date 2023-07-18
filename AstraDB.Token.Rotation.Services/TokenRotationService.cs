@@ -31,7 +31,7 @@ namespace AstraDB.Token.Rotation.Services
                 SaslPassword = KafkaConfig.Password
             };
 
-            using (var producer = new ProducerBuilder<string, string>(config).SetKeySerializer(Serializers.Int64).SetValueSerializer(Serializers.Utf8).Build())
+            using (var producer = new ProducerBuilder<string, string>(config).SetKeySerializer(Serializers.Utf8).SetValueSerializer(Serializers.Utf8).Build())
             {
                 Console.WriteLine("Attempting to fetch to AstraDB Tokens...");
                 var astraTokensResponse = await _restClient.ExecuteGetAsync<AstraTokensResponse>(new RestRequest("v2/clientIdSecrets"));
