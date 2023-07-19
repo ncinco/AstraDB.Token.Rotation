@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2023-07-19T23:54:30.287Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36" etag="R4_nkwBbW85QJvosApX7" version="21.6.2" type="github">
+<mxfile host="app.diagrams.net" modified="2023-07-19T23:54:47.752Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36" etag="iJJ5kgD9e9NHTPBKYokm" version="21.6.2" type="github">
   <diagram name="Page-1" id="pmoyyD1UTvwdsH77ybAz">
     <mxGraphModel dx="2074" dy="653" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
@@ -171,7 +171,7 @@
             <mxPoint as="offset" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="Kj3oq84XTqsNdQ_aNYuY-6" value="" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/other/Worker_Container_App.svg;" vertex="1" parent="1">
+        <mxCell id="Kj3oq84XTqsNdQ_aNYuY-6" value="topic consumer&lt;br&gt;app" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/other/Worker_Container_App.svg;" vertex="1" parent="1">
           <mxGeometry x="606.5" y="63" width="68" height="66" as="geometry" />
         </mxCell>
         <mxCell id="Kj3oq84XTqsNdQ_aNYuY-8" value="Datastax" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;gradientColor=#4D72F3;gradientDirection=north;fillColor=#3334B9;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.managed_apache_cassandra_service;" vertex="1" parent="1">
