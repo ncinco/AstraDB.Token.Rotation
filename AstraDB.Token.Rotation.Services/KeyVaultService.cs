@@ -2,8 +2,6 @@
 using Azure;
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
-using System;
-using System.Linq;
 
 namespace AstraDB.Token.Rotation.Services
 {
@@ -78,11 +76,19 @@ namespace AstraDB.Token.Rotation.Services
                 .GetSecretAsync(secretName);
         }
 
-        public List<SecretProperties> GetPropertiesOfSecrets()
+        public async Task<List<SecretProperties>> GetPropertiesOfSecretsAsync()
         {
-            return _keyVaultSecretClient
-                .GetPropertiesOfSecrets()
-                .ToList();
+            var list = new List<SecretProperties>();
+
+            var pagedSecrets = _keyVaultSecretClient
+                .GetPropertiesOfSecretsAsync();
+
+            await foreach (Page<SecretProperties> page in pagedSecrets.AsPages())
+            {
+                list.AddRange(page.Values);
+            }
+
+            return list;
         }
 
         public SecretProperties GetPreviousVersion(KeyVaultSecret secret, string keyVaultStatus)
@@ -101,27 +107,6 @@ namespace AstraDB.Token.Rotation.Services
             return previousVersion;
         }
 
-        public async Task<bool> ExpirePreviousVersionsAsyc(KeyVaultSecret theSecret)
-        {
-            var versions = _keyVaultSecretClient
-                .GetPropertiesOfSecretVersions(theSecret.Name)
-                .Where(x => x.Version != theSecret.Properties.Version && x.Enabled.Value)
-                .ToList();
-
-
-            foreach(var version in versions)
-            {
-                // disable, expire and status to rotated
-                version.Enabled = false;
-                version.ExpiresOn = DateTime.UtcNow;
-                version.Tags[KeyVaultTags.Status] = KeyVaultStatus.Rotated;
-
-                await _keyVaultSecretClient.UpdateSecretPropertiesAsync(version);
-            }
-
-            return true;
-        }
-
         public async Task<bool> ExpirePreviousVersionsAsyc(string secretName)
         {
             var theSecret = _keyVaultSecretClient.GetSecret(secretName);
@@ -130,8 +115,6 @@ namespace AstraDB.Token.Rotation.Services
             await foreach (Page<SecretProperties> page in pagedVersions.AsPages())
             {
                 // for some reason when a version is disabled, tags are cleared.
-                // do we move the tag status check here
-
                 // don't expire current version
                 // only version with rotating status to be expired
                 // and enabled

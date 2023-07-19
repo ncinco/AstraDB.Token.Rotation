@@ -35,49 +35,60 @@ namespace AstraDB.Token.Rotation.Services
             {
                 Console.WriteLine("Attempting to fetch to AstraDB Tokens...");
                 var astraTokensResponse = await _restClient.ExecuteGetAsync<AstraTokensResponse>(new RestRequest("v2/clientIdSecrets"));
-                Console.WriteLine("Succeeded fetching AstraDB Tokens.");
+                Console.WriteLine($"Succeeded fetching AstraDB Tokens. Token count: {astraTokensResponse.Data.Clients.Count}");
 
                 // just exit but unlikely
                 if (astraTokensResponse == null) return;
 
                 Console.WriteLine("Attempting to fetch to Key Vault Secrets...");
-                var keyVaultSecrets = _keyVaultService
-                    .GetPropertiesOfSecrets();
-                Console.WriteLine("Succeeded fetching Key Vault Secrets.");
+                var keyVaultSecrets = await _keyVaultService
+                    .GetPropertiesOfSecretsAsync();
+                Console.WriteLine($"Succeeded fetching Key Vault Secrets. Total secrets: {keyVaultSecrets.Count}");
 
                 foreach (var secret in keyVaultSecrets)
                 {
-                    var status = secret.Tags[KeyVaultTags.Status];
-                    var generatedOn = secret.Tags[KeyVaultTags.GeneratedOn];
-
-                    if (string.Compare(status, KeyVaultStatus.Active, true) == 0
-                        && (DateTime.UtcNow - DateTime.Parse(generatedOn).ToUniversalTime()).Minutes >= 3
-                        && secret.Name.Contains("-AccessToken"))
+                    try
                     {
-                        var seedClientId = secret.Tags[KeyVaultTags.SeedClientId];
-                        var clientId = secret.Tags[KeyVaultTags.ClientId];
+                        var status = secret.Tags[KeyVaultTags.Status];
+                        var generatedOn = secret.Tags[KeyVaultTags.GeneratedOn];
 
-                        Console.WriteLine($"Trying to rotate {seedClientId}-AccessToken and {seedClientId}-ClientSecret");
-
-                        // find matching astradb token
-                        var theAstraDbToken = astraTokensResponse.Data.Clients.FirstOrDefault(x => string.Compare(x.ClientId, clientId, true) == 0);
-
-                        if (theAstraDbToken != null)
+                        if (string.Compare(status, KeyVaultStatus.Active, true) == 0
+                            && (DateTime.UtcNow - DateTime.Parse(generatedOn).ToUniversalTime()).Minutes >= 3
+                            && secret.Name.Contains("-AccessToken"))
                         {
-                            var key = clientId;
-                            var messagePayload = new EventStreamTokenRotationMessage
+                            var seedClientId = secret.Tags[KeyVaultTags.SeedClientId];
+                            var clientId = secret.Tags[KeyVaultTags.ClientId];
+
+                            Console.WriteLine($"Trying to rotate {seedClientId}-AccessToken and {seedClientId}-ClientSecret");
+
+                            // find matching astradb token
+                            var theAstraDbToken = astraTokensResponse.Data.Clients.FirstOrDefault(x => string.Compare(x.ClientId, clientId, true) == 0);
+
+                            if (theAstraDbToken != null)
                             {
-                                SeedClientId = seedClientId,
-                                ClientId = clientId,
-                                Roles = theAstraDbToken.Roles
-                            };
+                                var key = clientId;
+                                var messagePayload = new EventStreamTokenRotationMessage
+                                {
+                                    SeedClientId = seedClientId,
+                                    ClientId = clientId,
+                                    Roles = theAstraDbToken.Roles
+                                };
 
-                            var messagePayloadJson = JsonConvert.SerializeObject(messagePayload);
+                                var messagePayloadJson = JsonConvert.SerializeObject(messagePayload);
 
-                            await producer.ProduceAsync(KafkaConfig.Topic, new Message<string, string> { Key = key, Value = messagePayloadJson });
+                                await producer.ProduceAsync(KafkaConfig.Topic, new Message<string, string> { Key = key, Value = messagePayloadJson });
 
-                            Console.WriteLine($"Message {key} sent (value: '{messagePayloadJson}')");
+                                Console.WriteLine($"Message {key} sent (value: '{messagePayloadJson}')");
+                            }
+                            else
+                            {
+                                Console.WriteLine($"Can't find token from astradb with client id of '{clientId}'. Secret with '{seedClientId}-AccessToken' and '{seedClientId}-AccessToken' are orphaned.");
+                            }
                         }
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine($"Error: {e.Message}");
                     }
                 }
 
@@ -152,8 +163,8 @@ namespace AstraDB.Token.Rotation.Services
         public async Task ExpireTokensAsync()
         {
             Console.WriteLine("Attempting to fetch to Key Vault Secrets...");
-            var keyVaultSecrets = _keyVaultService
-                .GetPropertiesOfSecrets();
+            var keyVaultSecrets = await _keyVaultService
+                .GetPropertiesOfSecretsAsync();
             Console.WriteLine("Succeeded fetching Key Vault Secrets.");
 
             // process just the rotating status with name contains "-AccessToken" since they come in pairs
