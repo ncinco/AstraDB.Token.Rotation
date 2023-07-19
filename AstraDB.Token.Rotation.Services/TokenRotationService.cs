@@ -165,7 +165,7 @@ namespace AstraDB.Token.Rotation.Services
             Console.WriteLine("Attempting to fetch to Key Vault Secrets...");
             var keyVaultSecrets = await _keyVaultService
                 .GetPropertiesOfSecretsAsync();
-            Console.WriteLine("Succeeded fetching Key Vault Secrets.");
+            Console.WriteLine($"Succeeded fetching Key Vault Secrets. Total secrets: {keyVaultSecrets.Count}");
 
             // process just the rotating status with name contains "-AccessToken" since they come in pairs
             foreach (var secret in keyVaultSecrets
