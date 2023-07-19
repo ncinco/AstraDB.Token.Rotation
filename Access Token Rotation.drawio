@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2023-07-19T22:33:55.009Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36" etag="lwBea4-dL3gTZQRyS-60" version="21.6.2" type="github">
+<mxfile host="app.diagrams.net" modified="2023-07-19T23:41:05.772Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36" etag="85Su-45_OzGgR4kkpo-h" version="21.6.2" type="github">
   <diagram name="Page-1" id="pmoyyD1UTvwdsH77ybAz">
     <mxGraphModel dx="2074" dy="653" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
@@ -137,6 +137,12 @@
               <mxPoint x="260" y="1060" />
             </Array>
           </mxGeometry>
+        </mxCell>
+        <mxCell id="Kj3oq84XTqsNdQ_aNYuY-1" value="" style="verticalLabelPosition=bottom;html=1;verticalAlign=top;align=center;strokeColor=none;fillColor=#00BEF2;shape=mxgraph.azure.azure_active_directory;" vertex="1" parent="1">
+          <mxGeometry x="100" y="70" width="47.5" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="Kj3oq84XTqsNdQ_aNYuY-2" value="" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/integration/Event_Grid_Domains.svg;" vertex="1" parent="1">
+          <mxGeometry x="240" y="65" width="67" height="60" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
