@@ -191,6 +191,10 @@ namespace AstraDB.Token.Rotation.Services
                     await _keyVaultService.ExpirePreviousVersionsAsyc($"{seedClientId}-ClientSecret");
                     Console.WriteLine($"Succeeded expiring old key vault version. ({previousClientId})");
                 }
+                else
+                {
+                    Console.WriteLine($"No previous version found for secret '{theSecret.Name}'. Potentially new secret without old version.");
+                }
             }
         }
     }

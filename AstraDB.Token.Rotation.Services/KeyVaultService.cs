@@ -99,11 +99,6 @@ namespace AstraDB.Token.Rotation.Services
                 .FirstOrDefault(x => x.Version != secret.Properties.Version
                     && x.Tags[KeyVaultTags.Status] == keyVaultStatus);
 
-            if (previousVersion == null)
-            {
-                Console.WriteLine($"Can't find secret named {secret.Name}. Potential bug.");
-            }
-
             return previousVersion;
         }
 
