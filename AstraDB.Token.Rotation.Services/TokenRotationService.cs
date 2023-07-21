@@ -185,7 +185,8 @@ namespace AstraDB.Token.Rotation.Services
                     var astraRevokeTokenResponse = await _restClient.DeleteAsync(revokeTokenRequest);
                     Console.WriteLine($"Succeeded revoking old astradb token. '{previousClientId}'");
 
-                    // if seed_clientId is missing for whatever reason, at least the token was already deleted
+                    // if seed_clientId is missing for whatever reason, at least the token was already deleted.
+                    // I don't know why it happened before
                     var seedClientId = theSecret.Properties.Tags[KeyVaultTags.SeedClientId];
                     Console.WriteLine($"Attempting expiring old key vault version. ({previousClientId})");
                     await _keyVaultService.ExpirePreviousVersionsAsyc($"{seedClientId}-AccessToken");
