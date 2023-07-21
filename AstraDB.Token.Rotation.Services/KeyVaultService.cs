@@ -110,25 +110,32 @@ namespace AstraDB.Token.Rotation.Services
 
             await foreach (Page<SecretProperties> page in pagedVersions.AsPages())
             {
-                // for some reason when a version is disabled, tags are cleared.
-                // don't expire current version
-                // only version with rotating status to be expired
-                // and enabled
-                var versions = page.Values
-                    .Where(x => x.Enabled.Value
-                        && x.Tags.ContainsKey(KeyVaultTags.Status)
-                        && x.Tags[KeyVaultTags.Status] == KeyVaultStatus.Rotating
-                        && x.Version != theSecret.Value.Properties.Version);
-
-                foreach (var version in versions)
+                try
                 {
-                    // disable, expire and rotated
-                    version.Enabled = false;
-                    version.ExpiresOn = DateTime.UtcNow;
-                    version.Tags[KeyVaultTags.Status] = KeyVaultStatus.Rotated;
+                    // for some reason when a version is disabled, tags are cleared.
+                    // don't expire current version
+                    // only version with rotating status to be expired
+                    // and enabled
+                    var versions = page.Values
+                        .Where(x => x.Enabled.Value
+                            && x.Tags.ContainsKey(KeyVaultTags.Status)
+                            && x.Tags[KeyVaultTags.Status] == KeyVaultStatus.Rotating
+                            && x.Version != theSecret.Value.Properties.Version);
 
-                    await _keyVaultSecretClient.UpdateSecretPropertiesAsync(version);
+                    foreach (var version in versions)
+                    {
+                        // disable, expire and rotated
+                        version.Enabled = false;
+                        version.ExpiresOn = DateTime.UtcNow;
+                        version.Tags[KeyVaultTags.Status] = KeyVaultStatus.Rotated;
+
+                        await _keyVaultSecretClient.UpdateSecretPropertiesAsync(version);
+                    }
                 }
+                catch (Exception e)
+                {
+                    Console.WriteLine($"Error: {e.Message}");
+                }                
             }
 
             return true;

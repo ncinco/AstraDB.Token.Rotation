@@ -172,30 +172,46 @@ namespace AstraDB.Token.Rotation.Services
                 .Where(x => string.Compare(x.Tags[KeyVaultTags.Status], KeyVaultStatus.Active) == 0
                 && x.Name.Contains("-AccessToken")))
             {
-                var theSecret = await _keyVaultService.GetSecretAsync(secret.Name);
-                var previousVersion = _keyVaultService.GetPreviousVersion(theSecret, KeyVaultStatus.Rotating);
-
-                // delete old token and expire previous version
-                if (previousVersion != null)
+                try
                 {
-                    var previousClientId = previousVersion.Tags[KeyVaultTags.ClientId];
+                    var theSecret = await _keyVaultService.GetSecretAsync(secret.Name);
+                    var previousVersion = _keyVaultService.GetPreviousVersion(theSecret, KeyVaultStatus.Rotating);
 
-                    Console.WriteLine($"Attempting to revoke old astradb token '{previousClientId}'");
-                    var revokeTokenRequest = new RestRequest($"v2/clientIdSecrets/{previousClientId}");
-                    var astraRevokeTokenResponse = await _restClient.DeleteAsync(revokeTokenRequest);
-                    Console.WriteLine($"Succeeded revoking old astradb token. '{previousClientId}'");
+                    // delete old token and expire previous version
+                    if (previousVersion != null)
+                    {
+                        Console.WriteLine($"Version content.");
+                        Console.WriteLine($"Name: {previousVersion.Name}");
+                        Console.WriteLine($"Enabled: {previousVersion.Enabled}");
+                        Console.WriteLine($"Version: {previousVersion.Version}");
+                        foreach (KeyValuePair<string, string> pair in previousVersion.Tags)
+                        {
+                            Console.WriteLine($"Key = {0}, Value = {1}", pair.Key, pair.Value);
+                        }
 
-                    // if seed_clientId is missing for whatever reason, at least the token was already deleted.
-                    // I don't know why it happened before
-                    var seedClientId = theSecret.Properties.Tags[KeyVaultTags.SeedClientId];
-                    Console.WriteLine($"Attempting expiring old key vault version. ({previousClientId})");
-                    await _keyVaultService.ExpirePreviousVersionsAsyc($"{seedClientId}-AccessToken");
-                    await _keyVaultService.ExpirePreviousVersionsAsyc($"{seedClientId}-ClientSecret");
-                    Console.WriteLine($"Succeeded expiring old key vault version. ({previousClientId})");
+                        var previousClientId = previousVersion.Tags[KeyVaultTags.ClientId];
+
+                        Console.WriteLine($"Attempting to revoke old astradb token '{previousClientId}'");
+                        var revokeTokenRequest = new RestRequest($"v2/clientIdSecrets/{previousClientId}");
+                        var astraRevokeTokenResponse = await _restClient.DeleteAsync(revokeTokenRequest);
+                        Console.WriteLine($"Succeeded revoking old astradb token. '{previousClientId}'. Code: {astraRevokeTokenResponse.StatusCode} Content: {astraRevokeTokenResponse.Content}");
+
+                        // if seed_clientId is missing for whatever reason, at least the token was already deleted.
+                        // I don't know why it happened before
+                        var seedClientId = theSecret.Properties.Tags[KeyVaultTags.SeedClientId];
+                        Console.WriteLine($"Attempting expiring old key vault version. ({previousClientId})");
+                        await _keyVaultService.ExpirePreviousVersionsAsyc($"{seedClientId}-AccessToken");
+                        await _keyVaultService.ExpirePreviousVersionsAsyc($"{seedClientId}-ClientSecret");
+                        Console.WriteLine($"Succeeded expiring old key vault version. ({previousClientId})");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"No previous version found for secret '{theSecret.Name}'. Potentially new secret without old version.");
+                    }
                 }
-                else
+                catch (Exception e)
                 {
-                    Console.WriteLine($"No previous version found for secret '{theSecret.Name}'. Potentially new secret without old version.");
+                    Console.WriteLine($"Error: {e.Message}");
                 }
             }
         }
