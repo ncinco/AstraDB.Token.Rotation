@@ -97,6 +97,7 @@ namespace AstraDB.Token.Rotation.Services
                 .GetPropertiesOfSecretVersions(secret.Name)
                 .OrderByDescending(x => x.CreatedOn)
                 .FirstOrDefault(x => x.Version != secret.Properties.Version
+                    && x.Enabled.Value
                     && x.Tags[KeyVaultTags.Status] == keyVaultStatus);
 
             return previousVersion;
