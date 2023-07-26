@@ -125,7 +125,7 @@ namespace AstraDB.Token.Rotation.Services
                     foreach (var version in versions)
                     {
                         // disable, expire and rotated
-                        version.Enabled = false;
+                        // version.Enabled = false;
                         version.ExpiresOn = DateTime.UtcNow;
                         version.Tags[KeyVaultTags.Status] = KeyVaultStatus.Rotated;
 
