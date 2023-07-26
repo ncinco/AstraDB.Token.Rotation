@@ -97,7 +97,7 @@ namespace AstraDB.Token.Rotation.Services
                 .GetPropertiesOfSecretVersions(secret.Name)
                 .OrderByDescending(x => x.CreatedOn)
                 .FirstOrDefault(x => x.Version != secret.Properties.Version
-                    && x.Enabled.Value
+                    // && x.Enabled.Value
                     && x.Tags[KeyVaultTags.Status] == keyVaultStatus);
 
             return previousVersion;
@@ -117,8 +117,7 @@ namespace AstraDB.Token.Rotation.Services
                     // only version with rotating status to be expired
                     // and enabled
                     var versions = page.Values
-                        .Where(x => x.Enabled.Value
-                            && x.Tags.ContainsKey(KeyVaultTags.Status)
+                        .Where(x.Tags.ContainsKey(KeyVaultTags.Status)
                             && x.Tags[KeyVaultTags.Status] == KeyVaultStatus.Rotating
                             && x.Version != theSecret.Value.Properties.Version);
 
