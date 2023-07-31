@@ -26,9 +26,13 @@ namespace AstraDB.Token.Rotation.Services
             {
                 BootstrapServers = KafkaConfig.BrokerList,
                 SecurityProtocol = SecurityProtocol.SaslSsl,
-                SaslMechanism = SaslMechanism.Plain,
-                SaslUsername = KafkaConfig.Username,
-                SaslPassword = KafkaConfig.Password
+                SaslMechanism = SaslMechanism.OAuthBearer,
+                SaslOauthbearerMethod = SaslOauthbearerMethod.Oidc,
+                SaslOauthbearerClientId = KafkaConfig.Producer.OAuthClientId,
+                SaslOauthbearerClientSecret = KafkaConfig.Producer.OAuthClientSecret,
+                SaslOauthbearerTokenEndpointUrl = "https://login.microsoftonline.com/a5e8ce79-b0ec-41a2-a51c-aee927f1d808/oauth2/v2.0/token",
+                SaslOauthbearerScope = "api://3cac0c5b-4612-4e4c-869c-d577cd17dc78/confluent-cloud-producer/.default",
+                SaslOauthbearerExtensions = "logicalCluster=lkc-ny02dz,identityPoolId=pool-edAb",
             };
 
             using (var producer = new ProducerBuilder<string, string>(config).SetKeySerializer(Serializers.Utf8).SetValueSerializer(Serializers.Utf8).Build())
@@ -100,14 +104,18 @@ namespace AstraDB.Token.Rotation.Services
         {
             var config = new ConsumerConfig
             {
-                BootstrapServers = KafkaConfig.BrokerList,
-                SecurityProtocol = SecurityProtocol.SaslSsl,
                 SocketTimeoutMs = 60000,
                 SessionTimeoutMs = 30000,
 
-                SaslMechanism = SaslMechanism.Plain,
-                SaslUsername = KafkaConfig.Username,
-                SaslPassword = KafkaConfig.Password,
+                BootstrapServers = KafkaConfig.BrokerList,
+                SecurityProtocol = SecurityProtocol.SaslSsl,
+                SaslMechanism = SaslMechanism.OAuthBearer,
+                SaslOauthbearerMethod = SaslOauthbearerMethod.Oidc,
+                SaslOauthbearerClientId = "",
+                SaslOauthbearerClientSecret = "",
+                SaslOauthbearerTokenEndpointUrl = "https://login.microsoftonline.com/a5e8ce79-b0ec-41a2-a51c-aee927f1d808/oauth2/v2.0/token",
+                SaslOauthbearerScope = "api://c148bf65-dcb3-491d-92ec-78a68eba06d8/confluent-cloud-consumer/.default",
+                SaslOauthbearerExtensions = "logicalCluster=lkc-ny02dz,identityPoolId=pool-edAb",
                 AutoOffsetReset = AutoOffsetReset.Earliest,
                 GroupId = KafkaConfig.ConsumerGroup,
                 BrokerVersionFallback = "1.0.0",
@@ -180,15 +188,6 @@ namespace AstraDB.Token.Rotation.Services
                     // delete old token and expire previous version
                     if (previousVersion != null)
                     {
-                        Console.WriteLine($"Version content.");
-                        Console.WriteLine($"Name: {previousVersion.Name}");
-                        Console.WriteLine($"Enabled: {previousVersion.Enabled}");
-                        Console.WriteLine($"Version: {previousVersion.Version}");
-                        foreach (KeyValuePair<string, string> pair in previousVersion.Tags)
-                        {
-                            Console.WriteLine($"Key = {0}, Value = {1}", pair.Key, pair.Value);
-                        }
-
                         var previousClientId = previousVersion.Tags[KeyVaultTags.ClientId];
 
                         Console.WriteLine($"Attempting to revoke old astradb token '{previousClientId}'");
