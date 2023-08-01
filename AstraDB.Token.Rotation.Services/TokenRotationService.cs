@@ -9,33 +9,22 @@ namespace AstraDB.Token.Rotation.Services
     public class TokenRotationService : ITokenRotationService
     {
         private readonly IKeyVaultService _keyVaultService;
+        private readonly IConfluentService _kafkaClientBuilder;
         private readonly RestClient _restClient;
 
-        public TokenRotationService(IKeyVaultService keyVaultService)
+        public TokenRotationService(IKeyVaultService keyVaultService, IConfluentService kafkaClientBuilder)
         {
             _keyVaultService = keyVaultService;
+            _kafkaClientBuilder = kafkaClientBuilder;
 
             _restClient = new RestClient(DevOpsApiConfig.Url);
             _restClient.AddDefaultHeader("Content-Type", "application/json");
-            _restClient.AddDefaultHeader("Authorization", $"Bearer {DevOpsApiConfig.Token}");
+            _restClient.AddDefaultHeader("Authorization", $"Bearer {DevOpsApiConfig.Token}");            
         }
 
         public async Task ProduceMessagesAsync()
         {
-            var config = new ProducerConfig
-            {
-                BootstrapServers = KafkaConfig.BrokerList,
-                SecurityProtocol = SecurityProtocol.SaslSsl,
-                SaslMechanism = SaslMechanism.OAuthBearer,
-                SaslOauthbearerMethod = SaslOauthbearerMethod.Oidc,
-                SaslOauthbearerClientId = KafkaConfig.Producer.OAuthClientId,
-                SaslOauthbearerClientSecret = KafkaConfig.Producer.OAuthClientSecret,
-                SaslOauthbearerTokenEndpointUrl = "https://login.microsoftonline.com/a5e8ce79-b0ec-41a2-a51c-aee927f1d808/oauth2/v2.0/token",
-                SaslOauthbearerScope = "api://3cac0c5b-4612-4e4c-869c-d577cd17dc78/confluent-cloud-producer/.default",
-                SaslOauthbearerExtensions = "logicalCluster=lkc-v1k1zj,identityPoolId=pool-y6OM",
-            };
-
-            using (var producer = new ProducerBuilder<string, string>(config).SetKeySerializer(Serializers.Utf8).SetValueSerializer(Serializers.Utf8).Build())
+            using (var producer = _kafkaClientBuilder.CreateProducer<string, string>())
             {
                 Console.WriteLine("Attempting to fetch to AstraDB Tokens...");
                 var astraTokensResponse = await _restClient.ExecuteGetAsync<AstraTokensResponse>(new RestRequest("v2/clientIdSecrets"));
@@ -80,7 +69,7 @@ namespace AstraDB.Token.Rotation.Services
 
                                 var messagePayloadJson = JsonConvert.SerializeObject(messagePayload);
 
-                                await producer.ProduceAsync(KafkaConfig.Topic, new Message<string, string> { Key = key, Value = messagePayloadJson });
+                                await producer.ProduceAsync(_kafkaClientBuilder.TopicName, new Message<string, string> { Key = key, Value = messagePayloadJson });
 
                                 Console.WriteLine($"Message {key} sent (value: '{messagePayloadJson}')");
                             }
@@ -102,33 +91,14 @@ namespace AstraDB.Token.Rotation.Services
 
         public async Task ConsumeMessagesAsync()
         {
-            var config = new ConsumerConfig
-            {
-                SocketTimeoutMs = 60000,
-                SessionTimeoutMs = 30000,
-
-                BootstrapServers = KafkaConfig.BrokerList,
-                SecurityProtocol = SecurityProtocol.SaslSsl,
-                SaslMechanism = SaslMechanism.OAuthBearer,
-                SaslOauthbearerMethod = SaslOauthbearerMethod.Oidc,
-                SaslOauthbearerClientId = KafkaConfig.Consumer.OAuthClientId,
-                SaslOauthbearerClientSecret = KafkaConfig.Consumer.OAuthClientSecret,
-                SaslOauthbearerTokenEndpointUrl = "https://login.microsoftonline.com/a5e8ce79-b0ec-41a2-a51c-aee927f1d808/oauth2/v2.0/token",
-                SaslOauthbearerScope = "api://3cac0c5b-4612-4e4c-869c-d577cd17dc78/confluent-cloud-producer/.default",
-                SaslOauthbearerExtensions = "logicalCluster=lkc-v1k1zj,identityPoolId=pool-y6OM",
-                AutoOffsetReset = AutoOffsetReset.Earliest,
-                GroupId = KafkaConfig.ConsumerGroup,
-                BrokerVersionFallback = "1.0.0",
-            };
-
-            using (var consumer = new ConsumerBuilder<string, string>(config).SetKeyDeserializer(Deserializers.Utf8).SetValueDeserializer(Deserializers.Utf8).Build())
+            using (var consumer = _kafkaClientBuilder.CreateConsumer<string, string>())
             {
                 CancellationTokenSource cts = new CancellationTokenSource();
                 Console.CancelKeyPress += (_, e) => { e.Cancel = true; cts.Cancel(); };
 
-                consumer.Subscribe(KafkaConfig.Topic);
+                consumer.Subscribe(_kafkaClientBuilder.TopicName);
 
-                Console.WriteLine("Consuming messages from topic: " + KafkaConfig.Topic + ", broker(s): " + KafkaConfig.BrokerList);
+                Console.WriteLine("Consuming messages from topic: " + _kafkaClientBuilder.TopicName + ", broker(s): " + _kafkaClientBuilder.ConsumerBootstrapServers);
 
                 while (true)
                 {

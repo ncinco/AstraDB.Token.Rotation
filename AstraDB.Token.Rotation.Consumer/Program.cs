@@ -1,4 +1,5 @@
 ﻿using AstraDB.Token.Rotation.Services;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace AstraDB.Token.Rotation.Consumer
 {
@@ -6,9 +7,12 @@ namespace AstraDB.Token.Rotation.Consumer
     {
         public async static Task Main(string[] args)
         {
-            var keyVaultService = new KeyVaultService();
-            var TokenRotationService = new TokenRotationService(keyVaultService);
-            await TokenRotationService.ConsumeMessagesAsync();
+            var builder = await Startup.ConfigureServices();
+
+            await builder
+                .Services
+                .GetService<ITokenRotationService>()
+                .ConsumeMessagesAsync();
         }
     }
 }
