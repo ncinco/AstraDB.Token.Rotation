@@ -32,7 +32,7 @@ namespace AstraDB.Token.Rotation.Services
                 SaslOauthbearerClientSecret = KafkaConfig.Producer.OAuthClientSecret,
                 SaslOauthbearerTokenEndpointUrl = "https://login.microsoftonline.com/a5e8ce79-b0ec-41a2-a51c-aee927f1d808/oauth2/v2.0/token",
                 SaslOauthbearerScope = "api://3cac0c5b-4612-4e4c-869c-d577cd17dc78/confluent-cloud-producer/.default",
-                SaslOauthbearerExtensions = "logicalCluster=lkc-ny02dz,identityPoolId=pool-edAb",
+                SaslOauthbearerExtensions = "logicalCluster=lkc-v1k1zj,identityPoolId=pool-y6OM",
             };
 
             using (var producer = new ProducerBuilder<string, string>(config).SetKeySerializer(Serializers.Utf8).SetValueSerializer(Serializers.Utf8).Build())
@@ -111,11 +111,11 @@ namespace AstraDB.Token.Rotation.Services
                 SecurityProtocol = SecurityProtocol.SaslSsl,
                 SaslMechanism = SaslMechanism.OAuthBearer,
                 SaslOauthbearerMethod = SaslOauthbearerMethod.Oidc,
-                SaslOauthbearerClientId = "",
-                SaslOauthbearerClientSecret = "",
+                SaslOauthbearerClientId = KafkaConfig.Consumer.OAuthClientId,
+                SaslOauthbearerClientSecret = KafkaConfig.Consumer.OAuthClientSecret,
                 SaslOauthbearerTokenEndpointUrl = "https://login.microsoftonline.com/a5e8ce79-b0ec-41a2-a51c-aee927f1d808/oauth2/v2.0/token",
-                SaslOauthbearerScope = "api://c148bf65-dcb3-491d-92ec-78a68eba06d8/confluent-cloud-consumer/.default",
-                SaslOauthbearerExtensions = "logicalCluster=lkc-ny02dz,identityPoolId=pool-edAb",
+                SaslOauthbearerScope = "api://3cac0c5b-4612-4e4c-869c-d577cd17dc78/confluent-cloud-producer/.default",
+                SaslOauthbearerExtensions = "logicalCluster=lkc-v1k1zj,identityPoolId=pool-y6OM",
                 AutoOffsetReset = AutoOffsetReset.Earliest,
                 GroupId = KafkaConfig.ConsumerGroup,
                 BrokerVersionFallback = "1.0.0",
