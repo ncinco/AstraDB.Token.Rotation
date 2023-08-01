@@ -1,33 +1,22 @@
 ﻿using Confluent.Kafka;
-using Microsoft.Extensions.Configuration;
 
 namespace AstraDB.Token.Rotation.Services
 {
-    public interface IConfluentService
-    {
-        string TopicName { get; }
-
-        string ProducerBootstrapServers { get; }
-
-        string ConsumerBootstrapServers { get; }
-
-        IProducer<K, V> CreateProducer<K, V>();
-
-        IConsumer<K, V> CreateConsumer<K, V>();
-    }
-
     public class ConfluentService : IConfluentService
     {
-        private readonly IConfigurationRoot _configurationRoot;
+        private readonly IConfigurationService _configurationService;
+
+        public ConfluentService(IConfigurationService configurationService)
+        {
+            _configurationService = configurationService;
+        }
 
         public string TopicName
         {
             get
             {
-#pragma warning disable CS8603 // Possible null reference return.
-                return _configurationRoot
+                return _configurationService
                 .GetValue<string>("TopicName");
-#pragma warning restore CS8603 // Possible null reference return.
             }
         }
 
@@ -35,9 +24,8 @@ namespace AstraDB.Token.Rotation.Services
         {
             get
             {
-                var config = _configurationRoot
-                    .GetSection("Producer")
-                    .Get<ProducerConfig>();
+                var config = _configurationService
+                    .GetConfig<ProducerConfig>("Producer");
 
                 return config.BootstrapServers;
             }
@@ -47,26 +35,17 @@ namespace AstraDB.Token.Rotation.Services
         {
             get
             {
-                var config = _configurationRoot
-                    .GetSection("Consumer")
-                    .Get<ConsumerConfig>();
+                var config = _configurationService
+                    .GetConfig<ConsumerConfig>("Consumer");
 
                 return config.BootstrapServers;
             }
         }
 
-        public ConfluentService()
-        {
-            _configurationRoot = new ConfigurationBuilder()
-                .AddJsonFile("./appsettings.json")
-                .Build();
-        }
-
         public IProducer<K, V> CreateProducer<K, V>()
         {
-            var config = _configurationRoot
-                .GetSection("Producer")
-                .Get<ProducerConfig>();
+            var config = _configurationService
+                .GetConfig<ProducerConfig>("Producer");
 
             var producer = new ProducerBuilder<K, V>(config)
                 .Build();
@@ -76,9 +55,8 @@ namespace AstraDB.Token.Rotation.Services
 
         public IConsumer<K, V> CreateConsumer<K, V>()
         {
-            var config = _configurationRoot
-                .GetSection("Consumer")
-                .Get<ConsumerConfig>();
+            var config = _configurationService
+                .GetConfig<ConsumerConfig>("Consumer");
 
             var producer = new ConsumerBuilder<K, V>(config)
                 .Build();

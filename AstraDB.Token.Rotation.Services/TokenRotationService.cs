@@ -12,14 +12,16 @@ namespace AstraDB.Token.Rotation.Services
         private readonly IConfluentService _kafkaClientBuilder;
         private readonly RestClient _restClient;
 
-        public TokenRotationService(IKeyVaultService keyVaultService, IConfluentService kafkaClientBuilder)
+        public TokenRotationService(IKeyVaultService keyVaultService, IConfluentService kafkaClientBuilder, IConfigurationService configurationService)
         {
             _keyVaultService = keyVaultService;
             _kafkaClientBuilder = kafkaClientBuilder;
 
-            _restClient = new RestClient(DevOpsApiConfig.Url);
+            var astraDbConfig = configurationService.GetConfig<AstraDbConfig>("AstraDb");
+
+            _restClient = new RestClient(astraDbConfig.Url);
             _restClient.AddDefaultHeader("Content-Type", "application/json");
-            _restClient.AddDefaultHeader("Authorization", $"Bearer {DevOpsApiConfig.Token}");            
+            _restClient.AddDefaultHeader("Authorization", $"Bearer {astraDbConfig.Token}");            
         }
 
         public async Task ProduceMessagesAsync()
@@ -78,6 +80,10 @@ namespace AstraDB.Token.Rotation.Services
                                 Console.WriteLine($"Can't find token from astradb with client id of '{clientId}'. Secret with '{seedClientId}-AccessToken' and '{seedClientId}-AccessToken' are orphaned.");
                             }
                         }
+                    }
+                    catch (ProduceException<string, string> e)
+                    {
+                        Console.WriteLine($"Produce error: {e.Error.Reason}");
                     }
                     catch (Exception e)
                     {
