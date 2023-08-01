@@ -21,6 +21,7 @@ namespace AstraDB.Token.Rotation.Producer
                         opt.WaitForJobsToComplete = true;
                     });
 
+                    services.AddTransient<IConfigurationService, ConfigurationService>();
                     services.AddTransient<IKeyVaultService, KeyVaultService>();
                     services.AddTransient<ITokenRotationService, TokenRotationService>();
                     services.AddTransient<IConfluentService, ConfluentService>();
