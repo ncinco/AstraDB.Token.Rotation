@@ -1,4 +1,5 @@
-﻿using Confluent.Kafka;
+﻿using Azure.Identity;
+using Confluent.Kafka;
 
 namespace AstraDB.Token.Rotation.Services
 {
@@ -20,11 +21,13 @@ namespace AstraDB.Token.Rotation.Services
 
         private void Handle(IClient client, string tokenValue)
         {
+            var credential = new DefaultAzureCredential();
+            var token = credential.GetToken(new Azure.Core.TokenRequestContext(new[] { "api://8821947d-dffa-42de-8426-bf531171750d/.default" }));
+            //var token = credential.GetToken(new Azure.Core.TokenRequestContext(new[] { "https://management.azure.com/" }));
 
-
-            if (!string.IsNullOrWhiteSpace(tokenValue))
+            if (!string.IsNullOrWhiteSpace(token.Token))
             {
-                ClientExtensions.OAuthBearerSetToken(client, tokenValue, LifeTimeInMs, PrincipalName);
+                ClientExtensions.OAuthBearerSetToken(client, token.Token, LifeTimeInMs, PrincipalName);
             }
         }
     }
