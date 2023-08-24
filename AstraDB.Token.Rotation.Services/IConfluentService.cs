@@ -10,8 +10,8 @@ namespace AstraDB.Token.Rotation.Services
 
         string ConsumerBootstrapServers { get; }
 
-        IProducer<K, V> CreateProducer<K, V>();
+        IProducer<string, string> CreateProducer();
 
-        IConsumer<K, V> CreateConsumer<K, V>();
+        IConsumer<string, string> CreateConsumer();
     }
 }

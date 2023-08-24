@@ -14,7 +14,7 @@ namespace AstraDB.Token.Rotation.Services
             var keyVaultConfig = configurationService.GetConfig<KeyVaultConfig>("KeyVault");
 
             var credential = new ClientSecretCredential(keyVaultConfig.TenantId, keyVaultConfig.ClientId, keyVaultConfig.ClientSecret);
-            _keyVaultSecretClient = new SecretClient(new Uri(keyVaultConfig.KeyVaultUrl), credential);            
+            _keyVaultSecretClient = new SecretClient(new Uri(keyVaultConfig.Url), credential);            
         }
 
         public async Task NewVersionAsync(string secretName, string secretStatus, string clientId, string generatedOn, string value)

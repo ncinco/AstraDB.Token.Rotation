@@ -2,6 +2,8 @@
 {
     public interface ITokenRotationService
     {
+        Task TaskProduceDummyMessagesAsync();
+
         Task ProduceMessagesAsync();
 
         Task ConsumeMessagesAsync();

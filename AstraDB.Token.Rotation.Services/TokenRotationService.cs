@@ -24,9 +24,24 @@ namespace AstraDB.Token.Rotation.Services
             _restClient.AddDefaultHeader("Authorization", $"Bearer {astraDbConfig.Token}");            
         }
 
+        public async Task TaskProduceDummyMessagesAsync()
+        {
+            using (var producer = _kafkaClientBuilder.CreateProducer())
+            {
+                for (int i = 0; i < 1000; i++)
+                {
+                    await producer.ProduceAsync(_kafkaClientBuilder.TopicName, new Message<string, string> { Key = $"key{i}", Value = $"value{i}" });
+
+                    Console.WriteLine($"Key: key{i} Value: value{i}");
+                }
+
+                producer.Flush();
+            }
+        }
+
         public async Task ProduceMessagesAsync()
         {
-            using (var producer = _kafkaClientBuilder.CreateProducer<string, string>())
+            using (var producer = _kafkaClientBuilder.CreateProducer())
             {
                 Console.WriteLine("Attempting to fetch to AstraDB Tokens...");
                 var astraTokensResponse = await _restClient.ExecuteGetAsync<AstraTokensResponse>(new RestRequest("v2/clientIdSecrets"));
@@ -97,7 +112,7 @@ namespace AstraDB.Token.Rotation.Services
 
         public async Task ConsumeMessagesAsync()
         {
-            using (var consumer = _kafkaClientBuilder.CreateConsumer<string, string>())
+            using (var consumer = _kafkaClientBuilder.CreateConsumer())
             {
                 CancellationTokenSource cts = new CancellationTokenSource();
                 Console.CancelKeyPress += (_, e) => { e.Cancel = true; cts.Cancel(); };
