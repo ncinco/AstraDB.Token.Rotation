@@ -22,12 +22,15 @@ namespace AstraDB.Token.Rotation.Services
         private void Handle(IClient client, string tokenValue)
         {
             var credential = new DefaultAzureCredential();
-            var token = credential.GetToken(new Azure.Core.TokenRequestContext(new[] { "api://8821947d-dffa-42de-8426-bf531171750d/.default" }));
-            //var token = credential.GetToken(new Azure.Core.TokenRequestContext(new[] { "https://management.azure.com/" }));
+            var token = credential.GetToken(new Azure.Core.TokenRequestContext(new[] { "https://management.azure.com/" }));
+
+            Console.Write($"Token: {token.Token}");
+            Console.Write($"ExpiresOn: {token.ExpiresOn}");
 
             if (!string.IsNullOrWhiteSpace(token.Token))
             {
-                ClientExtensions.OAuthBearerSetToken(client, token.Token, LifeTimeInMs, PrincipalName);
+                var expirationTicks = DateTime.Now.Ticks + token.ExpiresOn.Ticks;
+                ClientExtensions.OAuthBearerSetToken(client, token.Token, expirationTicks, PrincipalName);
             }
         }
     }
