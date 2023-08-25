@@ -5,8 +5,6 @@ namespace AstraDB.Token.Rotation.Services
 {
     public class TokenRefreshHandler : ITokenRefreshHandler
     {
-        // 1 hour
-        private const int LifeTimeInMs = 3600000;
         private const string PrincipalName = "confluent-managed-identity";
 
         public void ProducerCallbackHandler(IProducer<string, string> producer, string tokenValue)
@@ -24,8 +22,9 @@ namespace AstraDB.Token.Rotation.Services
             var credential = new DefaultAzureCredential();
             var token = credential.GetToken(new Azure.Core.TokenRequestContext(new[] { "https://management.azure.com/" }));
 
-            Console.Write($"Token: {token.Token}");
-            Console.Write($"ExpiresOn: {token.ExpiresOn}");
+            Console.WriteLine($"ExpiresOn: {token.ExpiresOn}");
+            Console.WriteLine($"Token: {token.Token}");
+            Console.WriteLine(Environment.NewLine);
 
             if (!string.IsNullOrWhiteSpace(token.Token))
             {

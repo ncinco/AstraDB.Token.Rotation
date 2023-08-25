@@ -12,7 +12,8 @@ namespace AstraDB.Token.Rotation.Consumer
             await builder
                 .Services
                 .GetService<ITokenRotationService>()
-                .ConsumeMessagesAsync();
+                .TaskConsumeDummyMessagesAsync();
+                //.ConsumeMessagesAsync();
         }
     }
 }

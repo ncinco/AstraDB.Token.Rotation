@@ -11,7 +11,7 @@ namespace AstraDB.Token.Rotation.Consumer
             var builder = Host.CreateDefaultBuilder()
                 .ConfigureServices((cxt, services) =>
                 {
-                    services.AddTransient<IConfigurationService, IConfigurationService>();
+                    services.AddTransient<IConfigurationService, ConfigurationService>();
                     services.AddTransient<IKeyVaultService, KeyVaultService>();
                     services.AddTransient<ITokenRotationService, TokenRotationService>();
                     services.AddTransient<IConfluentService, ConfluentService>();

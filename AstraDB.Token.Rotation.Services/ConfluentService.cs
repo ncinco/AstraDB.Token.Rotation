@@ -49,10 +49,8 @@ namespace AstraDB.Token.Rotation.Services
             var config = _configurationService
                 .GetConfig<ProducerConfig>("Producer");
 
-            var producerBuilder = new ProducerBuilder<string, string>(config);
-
-            var producer = producerBuilder
-                //.SetOAuthBearerTokenRefreshHandler(_tokenRefreshHandler.ProducerCallbackHandler)
+            var producer = new ProducerBuilder<string, string>(config)
+                .SetOAuthBearerTokenRefreshHandler(_tokenRefreshHandler.ProducerCallbackHandler)
                 .Build();
 
             return producer;
@@ -64,7 +62,7 @@ namespace AstraDB.Token.Rotation.Services
                 .GetConfig<ConsumerConfig>("Consumer");
 
             var consumer = new ConsumerBuilder<string, string>(config)
-                //.SetOAuthBearerTokenRefreshHandler(_tokenRefreshHandler.ConsumerCallbackHandler)
+                .SetOAuthBearerTokenRefreshHandler(_tokenRefreshHandler.ConsumerCallbackHandler)
                 .Build();
 
             return consumer;

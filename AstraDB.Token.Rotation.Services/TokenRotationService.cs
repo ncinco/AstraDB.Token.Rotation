@@ -40,6 +40,37 @@ namespace AstraDB.Token.Rotation.Services
             }
         }
 
+        public async Task TaskConsumeDummyMessagesAsync()
+        {
+            using (var consumer = _kafkaClientBuilder.CreateConsumer())
+            {
+                CancellationTokenSource cts = new CancellationTokenSource();
+                Console.CancelKeyPress += (_, e) => { e.Cancel = true; cts.Cancel(); };
+
+                consumer.Subscribe(_kafkaClientBuilder.TopicName);
+
+                Console.WriteLine("Consuming messages from topic: " + _kafkaClientBuilder.TopicName + ", broker(s): " + _kafkaClientBuilder.ConsumerBootstrapServers);
+
+                while (true)
+                {
+                    try
+                    {
+                        var msg = consumer.Consume(cts.Token);
+                        var message = JsonConvert.DeserializeObject<EventStreamTokenRotationMessage>(msg.Message.Value);
+                        Console.WriteLine($"Received: '{msg.Message.Value}'");
+                    }
+                    catch (ConsumeException e)
+                    {
+                        Console.WriteLine($"Consume error: {e.Error.Reason}");
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine($"Error: {e.Message}");
+                    }
+                }
+            }
+        }
+
         public async Task ProduceMessagesAsync()
         {
             using (var producer = _kafkaClientBuilder.CreateProducer())

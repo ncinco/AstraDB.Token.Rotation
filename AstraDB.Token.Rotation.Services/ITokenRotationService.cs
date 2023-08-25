@@ -4,6 +4,8 @@
     {
         Task TaskProduceDummyMessagesAsync();
 
+        Task TaskConsumeDummyMessagesAsync();
+
         Task ProduceMessagesAsync();
 
         Task ConsumeMessagesAsync();
