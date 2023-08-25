@@ -36,6 +36,7 @@ namespace AstraDB.Token.Rotation.Services
                 }
 
                 producer.Flush();
+                Console.WriteLine("producer.Flush()");
             }
         }
 
