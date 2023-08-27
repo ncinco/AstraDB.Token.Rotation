@@ -19,13 +19,14 @@ namespace AstraDB.Token.Rotation.Services
 
         private void Handle(IClient client, string configuration)
         {
-            var credential = new DefaultAzureCredential();
             try
             {
+                var credential = new DefaultAzureCredential();
                 var token = credential.GetToken(new Azure.Core.TokenRequestContext(new[] { "https://management.azure.com/" }));
 
                 Console.Write($"Token: {token.Token}");
                 Console.Write($"ExpiresOn: {token.ExpiresOn}");
+                Console.Write(Environment.NewLine);
 
                 if (!string.IsNullOrWhiteSpace(token.Token))
                 {

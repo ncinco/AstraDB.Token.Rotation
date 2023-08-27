@@ -64,7 +64,7 @@ namespace AstraDB.Token.Rotation.Services
                 .GetConfig<ConsumerConfig>("Consumer");
 
             var consumer = new ConsumerBuilder<string, string>(config)
-                //.SetOAuthBearerTokenRefreshHandler(_tokenRefreshHandler.ConsumerCallbackHandler)
+                .SetOAuthBearerTokenRefreshHandler(_tokenRefreshHandler.ConsumerCallbackHandler)
                 .Build();
 
             return consumer;
