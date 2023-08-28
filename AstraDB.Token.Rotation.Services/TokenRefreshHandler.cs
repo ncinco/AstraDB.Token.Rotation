@@ -43,7 +43,10 @@ namespace AstraDB.Token.Rotation.Services
             }
             catch(Exception ex)
             {
-                Console.WriteLine(ex.ToString());
+                var errorString = ex.ToString();
+
+                Console.WriteLine(errorString);
+                client.OAuthBearerSetTokenFailure(errorString);
             }
         }
     }
