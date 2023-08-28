@@ -19,12 +19,14 @@ namespace AstraDB.Token.Rotation.Services
 
         private void Handle(IClient client, string configuration)
         {
-            var extentions = new Dictionary<string, string>();
-            extentions.Add("logicalCluster", "lkc-3ng110");
-            extentions.Add("identityPoolId", "pool-y6OM");
-
             try
             {
+                var extentions = new Dictionary<string, string>
+                {
+                    { "logicalCluster", "lkc-3ng110" },
+                    { "identityPoolId", "pool-y6OM" }
+                };
+
                 var credential = new DefaultAzureCredential();
                 var token = credential.GetToken(new Azure.Core.TokenRequestContext(new[] { "https://management.azure.com/" }));
 
@@ -33,12 +35,11 @@ namespace AstraDB.Token.Rotation.Services
                 Console.Write(Environment.NewLine);
 
                 var lifetime = token.ExpiresOn.ToUnixTimeMilliseconds();
-                client.OAuthBearerSetToken(token.Token, lifetime, PrincipalName, extentions);
+                client.OAuthBearerSetToken(token.Token, lifetime, PrincipalName);
             }
             catch(Exception ex)
             {
                 Console.WriteLine(ex.ToString());
-                client.OAuthBearerSetTokenFailure(ex.ToString());
             }
         }
     }
