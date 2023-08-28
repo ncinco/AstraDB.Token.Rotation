@@ -32,12 +32,8 @@ namespace AstraDB.Token.Rotation.Services
                 Console.Write($"ExpiresOn: {token.ExpiresOn}");
                 Console.Write(Environment.NewLine);
 
-                if (!string.IsNullOrWhiteSpace(token.Token))
-                {
-                    var lifetime = token.ExpiresOn.ToUnixTimeMilliseconds();
-
-                    client.OAuthBearerSetToken(token.Token, lifetime, PrincipalName, extentions);
-                }
+                var lifetime = token.ExpiresOn.ToUnixTimeMilliseconds();
+                client.OAuthBearerSetToken(token.Token, lifetime, PrincipalName, extentions);
             }
             catch(Exception ex)
             {

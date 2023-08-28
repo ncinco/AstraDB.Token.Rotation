@@ -56,7 +56,9 @@ namespace AstraDB.Token.Rotation.Services
                     try
                     {
                         var msg = consumer.Consume(cts.Token);
-                        var message = JsonConvert.DeserializeObject<EventStreamTokenRotationMessage>(msg.Message.Value);
+                        //var message = JsonConvert.DeserializeObject<EventStreamTokenRotationMessage>(msg.Message.Value);
+                        //Console.WriteLine($"Received: '{msg.Message.Value}'");
+
                         Console.WriteLine($"Received: '{msg.Message.Value}'");
                     }
                     catch (ConsumeException e)
