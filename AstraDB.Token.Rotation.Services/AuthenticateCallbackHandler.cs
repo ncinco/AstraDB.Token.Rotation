@@ -5,7 +5,7 @@ namespace AstraDB.Token.Rotation.Services
 {
     public class AuthenticateCallbackHandler : IAuthenticateCallbackHandler
     {
-        private const string PrincipalName = "confluent-managed-identity";
+        public string PrincipalName => "confluent-managed-identity";
 
         public void Handle(IClient client, string configuration)
         {
