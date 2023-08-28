@@ -5,9 +5,9 @@ namespace AstraDB.Token.Rotation.Services
     public class ConfluentService : IConfluentService
     {
         private readonly IConfigurationService _configurationService;
-        private readonly IAuthenticateCallbackHandler _authenticateCallbackHandler;
+        private readonly AuthenticateCallbackHandlerBase _authenticateCallbackHandler;
 
-        public ConfluentService(IConfigurationService configurationService, IAuthenticateCallbackHandler authenticateCallbackHandler)
+        public ConfluentService(IConfigurationService configurationService, AuthenticateCallbackHandlerBase authenticateCallbackHandler)
         {
             _configurationService = configurationService;
             _authenticateCallbackHandler = authenticateCallbackHandler;
