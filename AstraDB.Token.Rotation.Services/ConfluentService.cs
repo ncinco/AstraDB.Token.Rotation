@@ -5,12 +5,12 @@ namespace AstraDB.Token.Rotation.Services
     public class ConfluentService : IConfluentService
     {
         private readonly IConfigurationService _configurationService;
-        private readonly ITokenRefreshHandler _tokenRefreshHandler;
+        private readonly IAuthenticateCallbackHandler _authenticateCallbackHandler;
 
-        public ConfluentService(IConfigurationService configurationService, ITokenRefreshHandler tokenRefreshHandler)
+        public ConfluentService(IConfigurationService configurationService, IAuthenticateCallbackHandler authenticateCallbackHandler)
         {
             _configurationService = configurationService;
-            _tokenRefreshHandler = tokenRefreshHandler;
+            _authenticateCallbackHandler = authenticateCallbackHandler;
         }
 
         public string TopicName
@@ -52,7 +52,7 @@ namespace AstraDB.Token.Rotation.Services
             var producerBuilder = new ProducerBuilder<string, string>(config);
 
             var producer = producerBuilder
-                .SetOAuthBearerTokenRefreshHandler(_tokenRefreshHandler.ProducerCallbackHandler)
+                .SetOAuthBearerTokenRefreshHandler(_authenticateCallbackHandler.Handle)
                 .Build();
 
             return producer;
@@ -64,7 +64,7 @@ namespace AstraDB.Token.Rotation.Services
                 .GetConfig<ConsumerConfig>("Consumer");
 
             var consumer = new ConsumerBuilder<string, string>(config)
-                .SetOAuthBearerTokenRefreshHandler(_tokenRefreshHandler.ConsumerCallbackHandler)
+                .SetOAuthBearerTokenRefreshHandler(_authenticateCallbackHandler.Handle)
                 .Build();
 
             return consumer;

@@ -15,7 +15,7 @@ namespace AstraDB.Token.Rotation.Consumer
                     services.AddTransient<IKeyVaultService, KeyVaultService>();
                     services.AddTransient<ITokenRotationService, TokenRotationService>();
                     services.AddTransient<IConfluentService, ConfluentService>();
-                    services.AddTransient<ITokenRefreshHandler, TokenRefreshHandler>();
+                    services.AddTransient<IAuthenticateCallbackHandler, AuthenticateCallbackHandler>();
                 }).Build();
 
             return builder;

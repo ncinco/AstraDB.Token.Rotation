@@ -3,21 +3,11 @@ using Confluent.Kafka;
 
 namespace AstraDB.Token.Rotation.Services
 {
-    public class TokenRefreshHandler : ITokenRefreshHandler
+    public class AuthenticateCallbackHandler : IAuthenticateCallbackHandler
     {
         private const string PrincipalName = "confluent-managed-identity";
 
-        public void ProducerCallbackHandler(IProducer<string, string> producer, string configuration)
-        {
-            Handle(producer, configuration);
-        }
-
-        public void ConsumerCallbackHandler(IConsumer<string, string> producer, string configuration)
-        {
-            Handle(producer, configuration);
-        }
-
-        private void Handle(IClient client, string configuration)
+        public void Handle(IClient client, string configuration)
         {
             try
             {
@@ -37,7 +27,7 @@ namespace AstraDB.Token.Rotation.Services
                 var lifetime = token.ExpiresOn.ToUnixTimeMilliseconds();
                 client.OAuthBearerSetToken(token.Token, lifetime, PrincipalName);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Console.WriteLine(ex.ToString());
             }
