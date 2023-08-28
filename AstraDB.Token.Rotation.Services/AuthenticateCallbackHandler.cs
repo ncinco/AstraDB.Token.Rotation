@@ -1,12 +1,41 @@
-﻿namespace AstraDB.Token.Rotation.Services
+﻿using Azure.Identity;
+using Confluent.Kafka;
+
+namespace AstraDB.Token.Rotation.Services
 {
-    public class AuthenticateCallbackHandler : AuthenticateCallbackHandlerBase
+    public class AuthenticateCallbackHandler
     {
-        public AuthenticateCallbackHandler()
+        private readonly string _principalName;
+        private readonly string _logicalCluster;
+        private readonly string _identityPoolId;
+
+        public AuthenticateCallbackHandler(string principalName, string localCluster, string identityPoolId)
         {
-            PrincipalName = "confluent-managed-identity";
-            LogicalCluster = "lkc-3ng110";
-            IdentityPoolId = "pool-y6OM";
+            _principalName = principalName;
+            _logicalCluster = localCluster;
+            _identityPoolId = identityPoolId;
+        }
+
+        public void Handle(IClient client, string configuration)
+        {
+            try
+            {
+                var extensions = new Dictionary<string, string>
+                {
+                    { "logicalCluster", _logicalCluster },
+                    { "identityPoolId", _identityPoolId }
+                };
+
+                var credential = new ManagedIdentityCredential();
+                var token = credential.GetToken(new Azure.Core.TokenRequestContext(new[] { "https://management.azure.com/" }));
+
+                var lifetime = token.ExpiresOn.ToUnixTimeMilliseconds();
+                client.OAuthBearerSetToken(token.Token, lifetime, _principalName, extensions);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
         }
     }
 }
