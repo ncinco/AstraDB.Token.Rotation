@@ -21,7 +21,7 @@ namespace AstraDB.Token.Rotation.Services
                     { "identityPoolId", IdentityPoolId }
                 };
 
-                var credential = new DefaultAzureCredential();
+                var credential = new ManagedIdentityCredential();
                 var token = credential.GetToken(new Azure.Core.TokenRequestContext(new[] { "https://management.azure.com/" }));
 
                 var lifetime = token.ExpiresOn.ToUnixTimeMilliseconds();
