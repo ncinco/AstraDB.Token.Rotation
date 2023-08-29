@@ -27,11 +27,16 @@ namespace AstraDB.Token.Rotation.Services
                     { "identityPoolId", _identityPoolId }
                 };
 
+                Console.WriteLine("Attempt to credential.GetToken()");
+                
                 var credential = new ManagedIdentityCredential();
                 var token = credential.GetToken(new Azure.Core.TokenRequestContext(new[] { "https://management.azure.com/" }));
 
                 var lifetime = token.ExpiresOn.ToUnixTimeMilliseconds();
                 client.OAuthBearerSetToken(token.Token, lifetime, _principalName, extensions);
+
+                Console.WriteLine($"ExpiresOn: {token.ExpiresOn}");
+                Console.WriteLine($"Token: {token.Token}");
             }
             catch (Exception ex)
             {
