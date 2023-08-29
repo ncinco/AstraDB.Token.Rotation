@@ -3,6 +3,7 @@ using AstraDB.Token.Rotation.Models;
 using Confluent.Kafka;
 using Newtonsoft.Json;
 using RestSharp;
+using System.Text;
 
 namespace AstraDB.Token.Rotation.Services
 {
@@ -21,22 +22,35 @@ namespace AstraDB.Token.Rotation.Services
 
             _restClient = new RestClient(astraDbConfig.Url);
             _restClient.AddDefaultHeader("Content-Type", "application/json");
-            _restClient.AddDefaultHeader("Authorization", $"Bearer {astraDbConfig.Token}");            
+            _restClient.AddDefaultHeader("Authorization", $"Bearer {astraDbConfig.Token}");
         }
 
         public async Task TaskProduceDummyMessagesAsync()
         {
-            using (var producer = _kafkaClientBuilder.CreateProducer())
+            try
             {
-                for (int i = 0; i < 1000; i++)
+                Console.WriteLine("Attempt producing messages.");
+
+                using (var producer = _kafkaClientBuilder.CreateProducer())
                 {
-                    await producer.ProduceAsync(_kafkaClientBuilder.TopicName, new Message<string, string> { Key = $"key{i}", Value = $"value{i}" });
+                    for (int i = 0; i < 1000; i++)
+                    {
+                        await producer.ProduceAsync(_kafkaClientBuilder.TopicName, new Message<string, string> { Key = $"key{i}", Value = $"value{i}" });
 
-                    Console.WriteLine($"Key: key{i} Value: value{i}");
+                        Console.WriteLine($"Key: key{i} Value: value{i}");
+                    }
+
+                    producer.Flush();
+                    Console.WriteLine("producer.Flush()");
                 }
+            }
+            catch (Exception ex)
+            {
+                var error = new StringBuilder();
+                error.AppendLine(ex.Message);
+                error.AppendLine(ex.ToString());
 
-                producer.Flush();
-                Console.WriteLine("producer.Flush()");
+                Console.WriteLine(error.ToString());
             }
         }
 
