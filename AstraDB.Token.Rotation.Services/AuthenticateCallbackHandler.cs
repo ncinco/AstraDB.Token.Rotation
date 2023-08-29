@@ -1,5 +1,6 @@
 ﻿using Azure.Identity;
 using Confluent.Kafka;
+using System.Text;
 
 namespace AstraDB.Token.Rotation.Services
 {
@@ -34,7 +35,11 @@ namespace AstraDB.Token.Rotation.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.ToString());
+                var error = new StringBuilder();
+                error.AppendLine(ex.Message);
+                error.AppendLine(ex.ToString());
+
+                Console.WriteLine(error.ToString());
             }
         }
     }
