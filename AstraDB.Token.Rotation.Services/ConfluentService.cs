@@ -47,7 +47,7 @@ namespace AstraDB.Token.Rotation.Services
             var config = _configurationService
                 .GetConfig<ProducerConfig>("Producer");
 
-            var handler = CreateAuthenticateCallbackHandler(config);
+            var handler = _createAuthenticateCallbackHandler(config);
 
             var producer = new ProducerBuilder<string, string>(config)
                 .SetOAuthBearerTokenRefreshHandler(handler.Handle)
@@ -61,7 +61,7 @@ namespace AstraDB.Token.Rotation.Services
             var config = _configurationService
                 .GetConfig<ConsumerConfig>("Consumer");
 
-            var handler = CreateAuthenticateCallbackHandler(config);
+            var handler = _createAuthenticateCallbackHandler(config);
 
             var consumer = new ConsumerBuilder<string, string>(config)
                 .SetOAuthBearerTokenRefreshHandler(handler.Handle)
@@ -70,7 +70,7 @@ namespace AstraDB.Token.Rotation.Services
             return consumer;
         }
 
-        private AuthenticateCallbackHandler CreateAuthenticateCallbackHandler(ClientConfig clientConfig)
+        private AuthenticateCallbackHandler _createAuthenticateCallbackHandler(ClientConfig clientConfig)
         {
             var extensions = clientConfig.SaslOauthbearerExtensions;
 
@@ -94,7 +94,7 @@ namespace AstraDB.Token.Rotation.Services
                 }
             }
 
-            var handler = new AuthenticateCallbackHandler(Guid.NewGuid().ToString(), logicalCluster, identityPoolId);
+            var handler = new AuthenticateCallbackHandler("confluent-managed-identity", logicalCluster, identityPoolId);
 
             return handler;
         }

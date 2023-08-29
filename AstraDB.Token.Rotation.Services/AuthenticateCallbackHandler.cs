@@ -1,5 +1,6 @@
 ﻿using Azure.Identity;
 using Confluent.Kafka;
+using Microsoft.Extensions.Azure;
 using System.Text;
 
 namespace AstraDB.Token.Rotation.Services
@@ -26,6 +27,9 @@ namespace AstraDB.Token.Rotation.Services
                     { "logicalCluster", _logicalCluster },
                     { "identityPoolId", _identityPoolId }
                 };
+
+                Console.WriteLine($"logicalCluster: {_logicalCluster}");
+                Console.WriteLine($"identityPoolId: {_identityPoolId}");
 
                 Console.WriteLine("Attempt to credential.GetToken()");
                 
