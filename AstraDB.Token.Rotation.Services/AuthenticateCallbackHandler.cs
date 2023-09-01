@@ -34,7 +34,7 @@ namespace AstraDB.Token.Rotation.Services
                 Console.WriteLine("Attempt to credential.GetToken()");
                 
                 var credential = new ManagedIdentityCredential();
-                var token = credential.GetToken(new Azure.Core.TokenRequestContext(new[] { "https://management.azure.com/" }));
+                var token = credential.GetToken(new Azure.Core.TokenRequestContext(new[] { "https://management.azure.com/.default" }));
 
                 var lifetime = token.ExpiresOn.ToUnixTimeMilliseconds();
                 client.OAuthBearerSetToken(token.Token, lifetime, _principalName, extensions);
