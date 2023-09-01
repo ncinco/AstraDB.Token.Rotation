@@ -31,7 +31,7 @@ namespace AstraDB.Token.Rotation.Services
                 Console.WriteLine($"logicalCluster: {_logicalCluster}");
                 Console.WriteLine($"identityPoolId: {_identityPoolId}");
 
-                Console.WriteLine("Attempt to credential.GetToken()");
+                Console.WriteLine("Attempt credential.GetToken()");
                 
                 var credential = new ManagedIdentityCredential();
                 var token = credential.GetToken(new Azure.Core.TokenRequestContext(new[] { "https://management.azure.com/.default" }));
