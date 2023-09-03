@@ -33,7 +33,7 @@ namespace AstraDB.Token.Rotation.Services
 
                 using (var producer = _kafkaClientBuilder.CreateProducer())
                 {
-                    for (int i = 0; i < 1000; i++)
+                    for (int i = 0; i < 10; i++)
                     {
                         await producer.ProduceAsync(_kafkaClientBuilder.TopicName, new Message<string, string> { Key = $"key{i}", Value = $"value{i}" });
 
