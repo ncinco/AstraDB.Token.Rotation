@@ -32,7 +32,7 @@ namespace AstraDB.Token.Rotation.Services
             {
                 Console.WriteLine("Attempt producing messages.");
 
-                if (_producer != null)
+                if (_producer == null)
                     _producer = _kafkaClientBuilder.CreateProducer();
 
                 for (int i = 0; i < 10; i++)
