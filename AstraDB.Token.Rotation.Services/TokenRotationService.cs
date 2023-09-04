@@ -13,7 +13,7 @@ namespace AstraDB.Token.Rotation.Services
         private readonly IConfluentService _kafkaClientBuilder;
         private readonly RestClient _restClient;
         private IProducer<string, string> _producer;
-        private int _messageCounter = 0;
+        private static int _messageCounter = 0;
 
         public TokenRotationService(IKeyVaultService keyVaultService, IConfluentService kafkaClientBuilder, IConfigurationService configurationService)
         {
