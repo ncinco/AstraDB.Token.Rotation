@@ -12,6 +12,7 @@ namespace AstraDB.Token.Rotation.Services
         private readonly IKeyVaultService _keyVaultService;
         private readonly IConfluentService _kafkaClientBuilder;
         private readonly RestClient _restClient;
+        private IProducer<string, string> _producer;
 
         public TokenRotationService(IKeyVaultService keyVaultService, IConfluentService kafkaClientBuilder, IConfigurationService configurationService)
         {
@@ -31,18 +32,18 @@ namespace AstraDB.Token.Rotation.Services
             {
                 Console.WriteLine("Attempt producing messages.");
 
-                using (var producer = _kafkaClientBuilder.CreateProducer())
+                if (_producer != null)
+                    _producer = _kafkaClientBuilder.CreateProducer();
+
+                for (int i = 0; i < 10; i++)
                 {
-                    for (int i = 0; i < 10; i++)
-                    {
-                        await producer.ProduceAsync(_kafkaClientBuilder.TopicName, new Message<string, string> { Key = $"key{i}", Value = $"value{i}" });
+                    await _producer.ProduceAsync(_kafkaClientBuilder.TopicName, new Message<string, string> { Key = $"key{i}", Value = $"value{i}" });
 
-                        Console.WriteLine($"Key: key{i} Value: value{i}");
-                    }
-
-                    producer.Flush();
-                    Console.WriteLine("producer.Flush()");
+                    Console.WriteLine($"Key: key{i} Value: value{i}");
                 }
+
+                _producer.Flush();
+                Console.WriteLine("producer.Flush()");
             }
             catch (Exception ex)
             {
