@@ -40,7 +40,7 @@ namespace AstraDB.Token.Rotation.Producer
                 .WithIdentity("TokenRotationTrigger", "TokenRotationGroup")
                 .StartNow()
                 .WithSimpleSchedule(x => x
-                    .WithIntervalInSeconds(30)
+                    .WithIntervalInSeconds(10)
                     .RepeatForever())
                 .Build();
 
