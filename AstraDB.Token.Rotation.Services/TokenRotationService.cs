@@ -13,7 +13,7 @@ namespace AstraDB.Token.Rotation.Services
         private readonly IConfluentService _kafkaClientBuilder;
         private readonly RestClient _restClient;
         private IProducer<string, string> _producer;
-        private int _messageCounter;
+        private int _messageCounter = 0;
 
         public TokenRotationService(IKeyVaultService keyVaultService, IConfluentService kafkaClientBuilder, IConfigurationService configurationService)
         {
@@ -34,10 +34,7 @@ namespace AstraDB.Token.Rotation.Services
                 Console.WriteLine("Attempt producing messages.");
 
                 if (_producer == null)
-                {
                     _producer = _kafkaClientBuilder.CreateProducer();
-                    _messageCounter = 0;
-                }
 
                 for (int i = 0; i < 10; i++)
                 {
